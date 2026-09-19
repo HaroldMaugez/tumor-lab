@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Références — Tumor Lab{% endblock %}
+{% block content %}
+
+<h1>Références scientifiques</h1>
+<p class="text-muted" style="margin-bottom:20px;">
+    Toutes les sources utilisées pour calibrer, valider et justifier le modèle.
+    Chaque référence indique ce qu'elle apporte au projet.
+</p>
+
+<div class="alert alert-info">
+    <strong>Deux régimes :</strong> Le modèle avasculaire (EMT6/Ro, souris) est validé contre des données publiées (31/32 checks).
+    Le modèle vasculaire humain est un <strong>scénario mécaniste</strong> basé sur des mécanismes littérés — pas des mesures patient.
+</div>
+
+{% for cat_key, cat_name in categories.items() %}
+{% set cat_refs = refs | selectattr("category", "equalto", cat_key) | list %}
+{% if cat_refs %}
+<div class="card" style="margin-bottom:20px;">
+    <h2 style="margin-bottom:12px;">{{ cat_name }}</h2>
+    {% for ref in cat_refs %}
+    <div style="padding:12px 0; border-bottom:1px solid #eee;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+            <div style="flex:1;">
+                <strong style="color:#2c3e50;">{{ ref.authors }}</strong>
+                <span class="text-muted">({{ ref.year }})</span>
+                <br>
+                <span style="font-style:italic; color:#555;">{{ ref.title }}</span>
+                <br>
+                <span class="text-muted">{{ ref.journal }} {{ ref.volume }}:{{ ref.pages }}</span>
+                {% if ref.doi %}
+                <br>
+                <a href="https://doi.org/{{ ref.doi }}" target="_blank" style="font-size:12px;">DOI: {{ ref.doi }}</a>
+                {% endif %}
+            </div>
+        </div>
+        <div style="margin-top:6px; font-size:12px; color:#666; background:#f9f9f9; padding:6px 10px; border-radius:4px;">
+            <strong>Usage :</strong> {{ ref.usage }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endfor %}
+
+<div class="card" style="margin-top:30px;">
+    <h2>Récapitulatif : du modèle avasculaire au modèle vasculaire</h2>
+    <table style="width:100%; font-size:13px;">
+        <thead>
+            <tr>
+                <th>Aspect</th>
+                <th>Avasculaire (EMT6/Ro)</th>
+                <th>Vasculaire (scénario humain)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Source de données</strong></td>
+                <td>Freyer & Sutherland 1986</td>
+                <td>Pas de données directes — modèle mécaniste</td>
+            </tr>
+            <tr>
+                <td><strong>O₂/glucose</strong></td>
+                <td>Résolu par transport continue</td>
+                <td>Champ d'échange radial (même solveur)</td>
+            </tr>
+            <tr>
+                <td><strong>Taille</strong></td>
+                <td>Sphéroïde Ø 200–1200 µm</td>
+                <td>Tumeur macroscopique (mm–cm) — extrapolation documentée</td>
+            </tr>
+            <tr>
+                <td><strong>Vascularisation</strong></td>
+                <td>Absente</td>
+                <td>VEGF, sprouting, pruning (Folkman 1971, Lugano 2020)</td>
+            </tr>
+            <tr>
+                <td><strong>Hypoxie</strong></td>
+                <td>Diffusion-limited (Grimes 2014)</td>
+                <td>Chronique → angiogenic switch (Vaupel 2007)</td>
+            </tr>
+            <tr>
+                <td><strong>Validation</strong></td>
+                <td>31/32 checks réussis</td>
+                <td>Scénario de raisonnement, pas de validation directe</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="card" style="margin-top:20px;">
+    <h2>Reproductibilité</h2>
+    <p style="font-size:13px; color:#666;">
+        Le fichier complet <code>REFERENCES.md</code> est disponible dans le dépôt source.
+        Chaque paramètre du modèle est étiqueté <code>MESURÉ</code>, <code>DÉRIVÉ</code>,
+        <code>CALIBRÉ</code> ou <code>SCENARIO</code> dans <code>parameters.py</code>
+        avec la référence correspondante.
+    </p>
+    <p style="font-size:13px; color:#666; margin-top:8px;">
+        <strong>31 tests sur 32 réussis</strong> — le seul échec (nécrose en milieu riche) est
+        documenté et laissé tel quel plutôt que corrigé par un paramètre ad hoc.
+    </p>
+</div>
+
+{% endblock %}

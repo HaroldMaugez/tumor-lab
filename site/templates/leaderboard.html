@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Classement — Tumor Lab{% endblock %}
+{% block content %}
+
+<h1>Classement</h1>
+<p class="text-muted">Mis à jour en temps réel.</p>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Joueur</th>
+                <th>Score</th>
+                <th>Résultat</th>
+                <th>Tours</th>
+                <th>Dose</th>
+                <th>Toxicité</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody id="lb-body">
+            <tr><td colspan="8" class="text-muted text-center">Chargement...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+async function loadLeaderboard() {
+    const res = await fetch("/api/leaderboard");
+    const data = await res.json();
+    render(data);
+}
+
+function render(rows) {
+    const tbody = document.getElementById("lb-body");
+    if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-muted text-center">Aucune partie jouée</td></tr>';
+        return;
+    }
+    tbody.innerHTML = rows.map((r, i) => {
+        const rank = i + 1;
+        const cls = rank <= 3 ? " rank-" + rank : "";
+        const outcome = {
+            "victoire_totale": "🏆 Victoire",
+            "controle_durable": "✅ Contrôle",
+            "echec_controle": "❌ Échec",
+            "toxicite_letale": "💀 Toxicité",
+            "progression": "📈 Progression"
+        }[r.outcome] || r.outcome;
+        return `<tr class="${cls}">
+            <td>${rank}</td>
+            <td><strong>${r.username}</strong></td>
+            <td><strong>${(r.score||0).toFixed(0)}</strong></td>
+            <td>${outcome}</td>
+            <td>${r.turns}</td>
+            <td>${(r.dose_gy||0).toFixed(1)} Gy</td>
+            <td>${(r.toxicity||0).toFixed(1)}</td>
+            <td class="text-muted">${(r.created_at||"").slice(0,16)}</td>
+        </tr>`;
+    }).join("");
+}
+
+// Polling court : ne monopolise pas un worker PythonAnywhere comme un SSE
+// permanent, et reste suffisant pour un classement de démonstration.
+loadLeaderboard();
+setInterval(loadLeaderboard, 5000);
+</script>
+
+{% endblock %}

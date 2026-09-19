@@ -1,0 +1,77 @@
+# Validation scientifique automatique à chaque push (template si le dossier Python
+# est copié sous Assets/StreamingAssets/tumorsim).
+#
+# -> à copier dans .github/workflows/validation.yml à la racine du dépôt Unity
+#
+# Rôle : empêcher qu'une modification de gameplay casse silencieusement la
+# validation du modèle. Si les tests passent sous 31/32, le push est signalé
+# en rouge sur GitHub.
+#
+# Ne teste PAS Unity (il faudrait une licence et GameCI) : uniquement le
+# moteur Python, qui est l'actif scientifique.
+
+name: Validation du moteur
+
+on:
+  push:
+    paths:
+      - 'Assets/StreamingAssets/tumorsim/**'
+      - '.github/workflows/validation.yml'
+  pull_request:
+    paths:
+      - 'Assets/StreamingAssets/tumorsim/**'
+  workflow_dispatch:        # lançable à la main depuis l'onglet Actions
+
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Installer les dépendances
+        run: python -m pip install --quiet numpy scipy
+
+      - name: Vérifier l'installation
+        working-directory: Assets/StreamingAssets/tumorsim
+        run: python check_setup.py
+
+      - name: Validation scientifique (31/32 attendus)
+        working-directory: Assets/StreamingAssets/tumorsim
+        run: |
+          python run_simulation.py --validate 2>&1 | tee /tmp/validation.log
+
+          # On extrait le score et on vérifie qu'il n'a pas régressé.
+          SCORE=$(grep -oP '\d+/\d+ tests réussis' /tmp/validation.log | tail -1)
+          echo "::notice::Score de validation : $SCORE"
+
+          PASSED=$(echo "$SCORE" | grep -oP '^\d+')
+          if [ -z "$PASSED" ]; then
+            echo "::error::Impossible de lire le score de validation."
+            exit 1
+          fi
+
+          # Seuil : 31. Le seul échec attendu et documenté est le diamètre
+          # d'apparition de la nécrose en milieu riche (cf. README, Limites).
+          if [ "$PASSED" -lt 31 ]; then
+            echo "::error::RÉGRESSION — $SCORE (attendu au moins 31)."
+            exit 1
+          fi
+
+          echo "OK : $SCORE"
+
+      - name: Archiver le rapport
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-validation
+          path: |
+            Assets/StreamingAssets/tumorsim/resultats/RAPPORT.md
+            /tmp/validation.log
+          retention-days: 30

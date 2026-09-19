@@ -1,0 +1,322 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Tumor Lab — Style simple et uniforme
+   ═══════════════════════════════════════════════════════════════════════ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    line-height: 1.5;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* ── Dark mode ── */
+body.dark {
+    background: #1a1a2e;
+    color: #e0e0e0;
+}
+body.dark nav { background: #0f0f23; }
+body.dark .card { background: #16213e; border-color: #1a1a3e; }
+body.dark .card h2 { color: #e0e0e0; }
+body.dark .card h3 { color: #b0b0b0; }
+body.dark .card p { color: #999; }
+body.dark .scenario-card { background: #16213e; border-color: #1a1a3e; }
+body.dark .scenario-card h3 { color: #e0e0e0; }
+body.dark .scenario-card p { color: #888; }
+body.dark .game-panel { background: #16213e; border-color: #1a1a3e; }
+body.dark .game-main { background: #16213e; border-color: #1a1a3e; }
+body.dark .stat label { color: #888; }
+body.dark .stat .value { color: #e0e0e0; }
+body.dark .stat .bar { background: #0f0f23; }
+body.dark .action-btn { background: #16213e; border-color: #1a1a3e; color: #e0e0e0; }
+body.dark .action-btn:hover { border-color: #3498db; background: #1a1a3e; }
+body.dark .action-btn .label { color: #e0e0e0; }
+body.dark .action-btn .desc { color: #888; }
+body.dark .tumor-canvas { background: #0f0f23; }
+body.dark table { color: #e0e0e0; }
+body.dark th { background: #0f0f23; color: #e0e0e0; }
+body.dark td { border-bottom-color: #1a1a3e; }
+body.dark tr:hover { background: #1a1a3e; }
+body.dark .form-group label { color: #aaa; }
+body.dark .form-group input, body.dark .form-group select { background: #0f0f23; border-color: #1a1a3e; color: #e0e0e0; }
+body.dark hr { border-top-color: #1a1a3e; }
+body.dark h1, body.dark h2 { color: #e0e0e0; }
+body.dark .alert-info { background: #1a1a3e; color: #4fc3f7; border-color: #1a1a3e; }
+body.dark .rank-1 { background: #2a2a1e; }
+body.dark .rank-2 { background: #1a1a2e; }
+body.dark .rank-3 { background: #2a1a1e; }
+body.dark select option { background: #0f0f23; color: #e0e0e0; }
+body.dark .game-over-banner { background: #1a1a3e; border: 2px solid #e74c3c; color: #e74c3c; }
+body.dark .organ-picker-card { background: #16213e; border-color: #1a1a3e; }
+body.dark .organ-picker-card.selected { border-color: #3498db; background: #1a1a3e; }
+body.dark .organ-picker-card h3 { color: #e0e0e0; }
+
+/* ── Nav ── */
+nav {
+    background: #2c3e50;
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+nav a { color: white; text-decoration: none; margin-left: 15px; font-size: 14px; }
+nav a:hover { text-decoration: underline; }
+nav .brand { font-size: 18px; font-weight: bold; }
+
+/* ── Container ── */
+.container { max-width: 900px; margin: 0 auto; padding: 20px; }
+
+/* ── Cards ── */
+.card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+.card h2 { font-size: 18px; margin-bottom: 8px; color: #2c3e50; }
+.card h3 { font-size: 16px; margin-bottom: 6px; color: #34495e; }
+.card p { font-size: 14px; color: #666; }
+
+/* ── Buttons ── */
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    color: white;
+    background: #3498db;
+}
+.btn:hover { background: #2980b9; text-decoration: none; }
+.btn-success { background: #27ae60; }
+.btn-success:hover { background: #229954; }
+.btn-danger { background: #e74c3c; }
+.btn-danger:hover { background: #c0392b; }
+.btn-secondary { background: #95a5a6; }
+.btn-secondary:hover { background: #7f8c8d; }
+.btn-small { padding: 6px 12px; font-size: 12px; }
+
+/* ── Forms ── */
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 4px; }
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* ── Tables ── */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #eee; }
+th { background: #ecf0f1; color: #2c3e50; font-weight: bold; }
+tr:hover { background: #f9f9f9; }
+
+/* ── Alerts ── */
+.alert {
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 13px;
+}
+.alert-error { background: #fdecea; color: #c0392b; border: 1px solid #f5c6cb; }
+.alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+
+/* ── Scenario grid ── */
+.scenario-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
+}
+.scenario-card {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+.scenario-card:hover { border-color: #3498db; }
+.scenario-card .icon { font-size: 32px; margin-bottom: 6px; }
+.scenario-card h3 { font-size: 15px; margin-bottom: 4px; }
+.scenario-card p { font-size: 12px; color: #888; margin-bottom: 10px; }
+
+/* ── Game HUD ── */
+.game-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 15px;
+    min-height: 80vh;
+}
+.game-panel {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    overflow-y: auto;
+}
+.game-main {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+.stat { margin-bottom: 8px; }
+.stat label { font-size: 11px; color: #888; text-transform: uppercase; }
+.stat .value { font-size: 16px; font-weight: bold; color: #2c3e50; }
+.stat .bar {
+    height: 8px;
+    background: #ecf0f1;
+    border-radius: 4px;
+    margin-top: 4px;
+    overflow: hidden;
+}
+.stat .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+.bar-fill.green { background: #27ae60; }
+.bar-fill.orange { background: #f39c12; }
+.bar-fill.red { background: #e74c3c; }
+.bar-fill.blue { background: #3498db; }
+
+.action-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 8px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    text-align: left;
+    font-size: 13px;
+}
+.action-btn:hover { border-color: #3498db; background: #f0f8ff; }
+.action-btn .label { font-weight: bold; color: #2c3e50; }
+.action-btn .desc { font-size: 11px; color: #888; }
+.action-btn.active { border-color: #27ae60; background: #d4edda; }
+
+.tumor-canvas {
+    width: 100%;
+    height: 350px;
+    background: #ecf0f1;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ── Tests ── */
+.test-pass { color: #27ae60; font-weight: bold; }
+.test-fail { color: #e74c3c; font-weight: bold; }
+.test-summary { font-size: 20px; font-weight: bold; margin-bottom: 15px; }
+
+/* ── Leaderboard ── */
+.rank-1 { background: #fff9c4; }
+.rank-2 { background: #f5f5f5; }
+.rank-3 { background: #ffe0b2; }
+
+/* ── Misc ── */
+.text-center { text-align: center; }
+.mt { margin-top: 15px; }
+.mb { margin-bottom: 15px; }
+.text-muted { color: #999; font-size: 12px; }
+h1 { font-size: 24px; color: #2c3e50; margin-bottom: 10px; }
+h2 { font-size: 18px; color: #2c3e50; margin-bottom: 8px; }
+hr { border: none; border-top: 1px solid #eee; margin: 15px 0; }
+
+/* ── Game over banner ── */
+.game-over-banner {
+    background: #fdecea;
+    border: 2px solid #e74c3c;
+    border-radius: 6px;
+    padding: 15px;
+    text-align: center;
+    margin-bottom: 15px;
+    color: #c0392b;
+    font-weight: bold;
+    font-size: 16px;
+}
+.game-over-banner.win { background: #d4edda; color: #155724; border-color: #27ae60; }
+
+/* ── Organ picker ── */
+.organ-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.organ-picker-card {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.organ-picker-card:hover { border-color: #3498db; }
+.organ-picker-card.selected { border-color: #3498db; background: #e8f4fd; }
+.organ-picker-card .icon { font-size: 28px; margin-bottom: 4px; }
+.organ-picker-card h3 { font-size: 13px; margin-bottom: 2px; }
+.organ-picker-card p { font-size: 11px; color: #888; }
+
+/* ── Dark mode toggle ── */
+.dark-toggle {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 15px;
+}
+.dark-toggle:hover { background: rgba(255,255,255,0.1); }
+
+/* ── Toast / notification ── */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    color: white;
+    font-size: 13px;
+    z-index: 999;
+    animation: fadeIn 0.3s;
+}
+.toast-success { background: #27ae60; }
+.toast-error { background: #e74c3c; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Disabled state for game over ── */
+.action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: #ddd;
+    background: #f5f5f5;
+}
+body.dark .action-btn:disabled { background: #0f0f23; border-color: #1a1a3e; }
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+    .game-layout { grid-template-columns: 1fr; }
+    .scenario-grid { grid-template-columns: 1fr; }
+}

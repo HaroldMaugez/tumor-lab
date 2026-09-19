@@ -1,0 +1,93 @@
+# .gitattributes pour un projet Unity
+# -> à copier à la RACINE du projet Unity, renommé en ".gitattributes"
+#
+# Deux rôles distincts, tous deux indispensables :
+#   1. forcer la fusion "union" sur les fichiers Unity YAML (évite la plupart
+#      des conflits de scène/prefab) ;
+#   2. router les gros binaires vers Git LFS.
+
+# ---------------------------------------------------------------------------
+# Normalisation des fins de ligne
+# ---------------------------------------------------------------------------
+* text=auto
+
+*.cs      text diff=csharp
+*.py      text diff=python
+*.md      text
+*.json    text
+*.shader  text
+*.uxml    text
+*.uss     text
+
+# ---------------------------------------------------------------------------
+# Fichiers Unity au format texte (YAML) — fusion assistée
+# ---------------------------------------------------------------------------
+# Prérequis IMPÉRATIF côté Unity :
+#   Edit > Project Settings > Editor
+#     Version Control : Mode = "Visible Meta Files"
+#     Asset Serialization : Mode = "Force Text"
+# Sans cela, scènes et prefabs sont binaires et TOUT conflit devient
+# irrécupérable.
+*.meta            text merge=unityyamlmerge eol=lf
+*.unity           text merge=unityyamlmerge eol=lf
+*.prefab          text merge=unityyamlmerge eol=lf
+*.asset           text merge=unityyamlmerge eol=lf
+*.mat             text merge=unityyamlmerge eol=lf
+*.anim            text merge=unityyamlmerge eol=lf
+*.controller      text merge=unityyamlmerge eol=lf
+*.overrideController text merge=unityyamlmerge eol=lf
+*.physicMaterial  text merge=unityyamlmerge eol=lf
+*.physicsMaterial2D text merge=unityyamlmerge eol=lf
+*.playable        text merge=unityyamlmerge eol=lf
+*.mask            text merge=unityyamlmerge eol=lf
+*.brush           text merge=unityyamlmerge eol=lf
+*.flare           text merge=unityyamlmerge eol=lf
+*.fontsettings    text merge=unityyamlmerge eol=lf
+*.guiskin         text merge=unityyamlmerge eol=lf
+*.giparams        text merge=unityyamlmerge eol=lf
+*.lighting        text merge=unityyamlmerge eol=lf
+*.mixer           text merge=unityyamlmerge eol=lf
+*.renderTexture   text merge=unityyamlmerge eol=lf
+*.spriteatlas     text merge=unityyamlmerge eol=lf
+*.terrainlayer    text merge=unityyamlmerge eol=lf
+*.signal          text merge=unityyamlmerge eol=lf
+
+# ---------------------------------------------------------------------------
+# Git LFS — binaires
+# ---------------------------------------------------------------------------
+# Pour un jeu en formes simples, vous n'aurez presque rien ici au début.
+# Ces règles sont posées d'avance : ajouter un fichier à LFS APRÈS l'avoir
+# commité normalement ne le retire pas de l'historique, il faut réécrire
+# l'historique. Autant prévoir dès le premier commit.
+
+# Images
+*.png  filter=lfs diff=lfs merge=lfs -text
+*.jpg  filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.tga  filter=lfs diff=lfs merge=lfs -text
+*.psd  filter=lfs diff=lfs merge=lfs -text
+*.tif  filter=lfs diff=lfs merge=lfs -text
+*.exr  filter=lfs diff=lfs merge=lfs -text
+*.hdr  filter=lfs diff=lfs merge=lfs -text
+
+# Audio
+*.mp3  filter=lfs diff=lfs merge=lfs -text
+*.ogg  filter=lfs diff=lfs merge=lfs -text
+*.wav  filter=lfs diff=lfs merge=lfs -text
+
+# Modèles 3D
+*.fbx  filter=lfs diff=lfs merge=lfs -text
+*.obj  filter=lfs diff=lfs merge=lfs -text
+*.blend filter=lfs diff=lfs merge=lfs -text
+
+# Vidéo / polices / archives
+*.mp4  filter=lfs diff=lfs merge=lfs -text
+*.mov  filter=lfs diff=lfs merge=lfs -text
+*.ttf  filter=lfs diff=lfs merge=lfs -text
+*.otf  filter=lfs diff=lfs merge=lfs -text
+*.zip  filter=lfs diff=lfs merge=lfs -text
+
+# ATTENTION : les .png de results/ (figures scientifiques, maquettes) passeront
+# aussi en LFS. Si vous préférez les garder en Git normal parce qu'ils changent
+# rarement, ajoutez avant les règles ci-dessus :
+#   results/**/*.png -filter -diff -merge text=auto

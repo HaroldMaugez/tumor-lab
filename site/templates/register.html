@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Inscription — Tumor Lab{% endblock %}
+{% block content %}
+
+<h1>Inscription</h1>
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+<div class="card">
+    <form method="POST">
+        <div class="form-group">
+            <label>Nom d'utilisateur</label>
+            <input type="text" name="username" required minlength="2" placeholder="Votre pseudo">
+        </div>
+        <div class="form-group">
+            <label>Mot de passe</label>
+            <input type="password" name="password" required minlength="4" placeholder="4 caractères minimum">
+        </div>
+        <button type="submit" class="btn btn-success">Créer mon compte</button>
+    </form>
+</div>
+
+<p class="text-muted mt">Déjà un compte ? <a href="{{ url_for('login') }}">Se connecter</a></p>
+
+{% endblock %}

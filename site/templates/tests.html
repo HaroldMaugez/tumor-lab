@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Tests — Tumor Lab{% endblock %}
+{% block content %}
+
+<h1>Vérification & Validation</h1>
+<p class="text-muted">Suite complète de tests du modèle — exécution en cours...</p>
+
+<div class="card" id="summary-card">
+    <div class="test-summary" id="summary">⏳ Chargement des tests...</div>
+    <p id="summary-detail" class="text-muted"></p>
+</div>
+
+<div class="card">
+    <h2>Vérification (le solveur est-il correct ?)</h2>
+    <table>
+        <thead>
+            <tr><th>Test</th><th>Valeur</th><th>Critère</th><th>Statut</th><th>Détail</th></tr>
+        </thead>
+        <tbody id="checks-verification"></tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Validation (les équations sont-elles les bonnes ?)</h2>
+    <table>
+        <thead>
+            <tr><th>Test</th><th>Valeur</th><th>Référence</th><th>Statut</th><th>Détail</th></tr>
+        </thead>
+        <tbody id="checks-validation"></tbody>
+    </table>
+</div>
+
+<script>
+let pollInterval = null;
+
+async function runTests() {
+    try {
+        const res = await fetch("/api/tests/run");
+        const data = await res.json();
+
+        if (data.status === "running") {
+            document.getElementById("summary").innerHTML = "⏳ Les tests tournent...";
+            document.getElementById("summary-detail").textContent =
+                "Ça prend environ 3 minutes. La page se rafraîchit automatiquement.";
+            if (!pollInterval) pollInterval = setInterval(runTests, 5000);
+            return;
+        }
+
+        // Tests are done
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+
+        document.getElementById("summary").innerHTML =
+            `<span class="test-pass">${data.passed}</span> / ${data.total} tests réussis`;
+        document.getElementById("summary-detail").textContent =
+            data.passed === data.total
+                ? "✅ Tous les tests passent."
+                : `⚠ ${data.total - data.passed} test(s) échoué(s) — voir ci-dessous.`;
+
+        const verif = data.checks.filter(c => c.category === "vérification");
+        const valid = data.checks.filter(c => c.category === "validation");
+
+        renderTable("checks-verification", verif);
+        renderTable("checks-validation", valid);
+    } catch (e) {
+        document.getElementById("summary").innerHTML = "❌ Erreur lors du chargement";
+        document.getElementById("summary-detail").textContent = e.message;
+    }
+}
+
+function renderTable(id, checks) {
+    const tbody = document.getElementById(id);
+    if (!checks.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-muted">Aucun test</td></tr>';
+        return;
+    }
+    tbody.innerHTML = checks.map(c => {
+        const cls = c.passed ? "test-pass" : "test-fail";
+        const icon = c.passed ? "✅" : "❌";
+        const val = c.value !== null ? c.value.toFixed(4) + " " + c.unit : "N/A";
+        const crit = c.criterion.toFixed(4) + " " + c.unit;
+        return `<tr>
+            <td>${c.name}</td>
+            <td>${val}</td>
+            <td>${crit}</td>
+            <td class="${cls}">${icon} ${c.passed ? "PASS" : "FAIL"}</td>
+            <td class="text-muted">${c.detail || ""}</td>
+        </tr>`;
+    }).join("");
+}
+
+runTests();
+</script>
+
+{% endblock %}

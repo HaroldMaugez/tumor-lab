@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+{% block title %}Jeu — Tumor Lab{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <h1>Mode : {{ scenario }}</h1>
+    <div>
+        <button class="btn btn-secondary btn-small" onclick="runAI()" id="btn-ai">🤖 Tour IA</button>
+        <a href="{{ url_for('home') }}" class="btn btn-secondary btn-small">← Retour</a>
+    </div>
+</div>
+
+<!-- Organ picker (shown before game starts) -->
+<div id="organ-picker" class="card">
+    <h2>Choisissez l'organe cible</h2>
+    <p style="margin-bottom:12px;">Le choix de l'organe détermine la sensibilité aux radiations et la difficulté.</p>
+    <div class="organ-picker">
+        <div class="organ-picker-card selected" data-organ="generique_tardif" data-sparing="0.6" onclick="pickOrgan(this)">
+            <div class="icon">🧬</div>
+            <h3>Générique tardif</h3>
+            <p>Sparing factor 0.6 — Standard, équilibré</p>
+        </div>
+        <div class="organ-picker-card" data-organ="poumon" data-sparing="1.0" onclick="pickOrgan(this)">
+            <div class="icon">🫁</div>
+            <h3>Poumon</h3>
+            <p>Sparing factor 1.0 — Très sensible, TD50 = 24.5 Gy</p>
+        </div>
+        <div class="organ-picker-card" data-organ="sein" data-sparing="0.8" onclick="pickOrgan(this)">
+            <div class="icon">💗</div>
+            <h3>Sein</h3>
+            <p>Sparing factor 0.8 — Intermédiaire</p>
+        </div>
+        <div class="organ-picker-card" data-organ="colorectal" data-sparing="0.7" onclick="pickOrgan(this)">
+            <div class="icon">🔴</div>
+            <h3>Colorectal</h3>
+            <p>Sparing factor 0.7 — Modéré</p>
+        </div>
+        <div class="organ-picker-card" data-organ="cerveau" data-sparing="1.0" onclick="pickOrgan(this)">
+            <div class="icon">🧠</div>
+            <h3>Cerveau</h3>
+            <p>Sparing factor 1.0 — Organe critique, dose très limitée</p>
+        </div>
+    </div>
+    <button class="btn btn-success" onclick="startGame()">Commencer la partie</button>
+</div>
+
+<!-- Game over banner (hidden initially) -->
+<div id="game-over-banner" class="game-over-banner" style="display:none;"></div>
+
+<!-- Game HUD (hidden until game starts) -->
+<div id="game-hud" style="display:none;">
+<div class="game-layout">
+    <!-- LEFT PANEL: Stats + Actions -->
+    <div class="game-panel" id="panel">
+        <h3>État du patient</h3>
+        <hr>
+
+        <div class="stat">
+            <label>Jour</label>
+            <div class="value" id="day">—</div>
+        </div>
+        <div class="stat">
+            <label>Diamètre observé</label>
+            <div class="value" id="diameter">— µm</div>
+            <div class="bar"><div class="bar-fill blue" id="diameter-bar" style="width:0%"></div></div>
+        </div>
+        <div class="stat">
+            <label>Toxicité</label>
+            <div class="value" id="toxicity">—</div>
+            <div class="bar"><div class="bar-fill green" id="tox-bar" style="width:0%"></div></div>
+        </div>
+        <div class="stat">
+            <label>Dose restante</label>
+            <div class="value" id="dose">— Gy</div>
+            <div class="bar"><div class="bar-fill orange" id="dose-bar" style="width:100%"></div></div>
+        </div>
+        <div class="stat">
+            <label>Score</label>
+            <div class="value" id="score">0</div>
+        </div>
+        <div class="stat">
+            <label>Régime</label>
+            <div class="value text-muted" id="regime">—</div>
+        </div>
+        <div class="stat">
+            <label>Activité vasculaire</label>
+            <div class="value" id="vascular">—</div>
+        </div>
+
+        <hr>
+        <h3>Dernier examen</h3>
+        <div id="last-exam" class="text-muted" style="font-size:12px;">Aucun</div>
+
+        <hr>
+        <h3>Actions</h3>
+
+        <button class="action-btn game-action" onclick="doAction({type:'wait'})">
+            <div class="label">⏱ Attendre</div>
+            <div class="desc">Passer un jour sans traitement</div>
+        </button>
+
+        <div style="margin-bottom:8px;">
+            <label style="font-size:12px; color:#555;">Dose (Gy) : <strong id="dose-val">2.0</strong></label>
+            <input type="range" id="dose-slider" min="0" max="5" step="0.1" value="2.0"
+                   oninput="document.getElementById('dose-val').textContent=this.value"
+                   style="width:100%;">
+            <button class="action-btn game-action" onclick="doIrradiate()">
+                <div class="label">☢ Irradier</div>
+                <div class="desc">Appliquer une dose de radiation</div>
+            </button>
+        </div>
+
+        <button class="action-btn game-action" onclick="doAction({type:'biopsy'})">
+            <div class="label">🔬 Biopsie</div>
+            <div class="desc">Mesurer la résistance (1 jour de coût)</div>
+        </button>
+
+        <button class="action-btn game-action" onclick="doAction({type:'po2_imaging'})">
+            <div class="label">🫁 Imagerie pO₂</div>
+            <div class="desc">Cartographier l'oxygène (0.5 jour de coût)</div>
+        </button>
+
+        <div id="antiangio-section" style="display:none; margin-bottom:8px;">
+            <label style="font-size:12px; color:#555;">Intensité : <strong id="antiangio-val">0.65</strong></label>
+            <input type="range" id="antiangio-slider" min="0" max="1" step="0.05" value="0.65"
+                   oninput="document.getElementById('antiangio-val').textContent=this.value"
+                   style="width:100%;">
+            <button class="action-btn game-action" onclick="doAntiangio()">
+                <div class="label">🩸 Anti-angiogénique</div>
+                <div class="desc">Réduire le réseau vasculaire</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- RIGHT: Tumor visualization + log -->
+    <div class="game-main">
+        <div class="tumor-canvas" id="tumor-canvas">
+            <canvas id="tumor-cv" width="400" height="350"></canvas>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <div class="card" style="flex:1; margin:0;">
+                <h3>Évolution</h3>
+                <canvas id="chart-cv" width="400" height="150"></canvas>
+            </div>
+        </div>
+
+        <div class="card" style="margin:0;">
+            <h3>Journal</h3>
+            <div id="log" style="max-height:200px; overflow-y:auto; font-size:12px; font-family:monospace; background:#f9f9f9; padding:8px; border-radius:4px;">
+                En attente du premier tour...
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+const SCENARIO = "{{ scenario }}";
+let history = [];
+let gameData = {};
+let gameOver = false;
+let requestInFlight = false;
+let selectedOrgan = "generique_tardif";
+let selectedSparing = 0.6;
+
+// ── Organ picker ──
+function pickOrgan(el) {
+    document.querySelectorAll(".organ-picker-card").forEach(c => c.classList.remove("selected"));
+    el.classList.add("selected");
+    selectedOrgan = el.dataset.organ;
+    selectedSparing = parseFloat(el.dataset.sparing);
+}
+
+// ── Start game ──
+async function startGame() {
+    const res = await fetch("/api/game/reset", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            scenario: SCENARIO,
+            seed: Math.floor(Math.random()*99999),
+            organ: selectedOrgan,
+            sparing_factor: selectedSparing
+        })
+    });
+    const data = await res.json();
+    if (!data.ok) { alert("Erreur: " + data.error); return; }
+    gameData = data.observation;
+    history = [];
+    gameOver = false;
+    updateUI(gameData);
+    addLog("🎮 Partie lancée — " + SCENARIO + " — Organe : " + selectedOrgan);
+    if (SCENARIO === "vascular_human") {
+        document.getElementById("antiangio-section").style.display = "block";
+    }
+    // Show game HUD, hide picker
+    document.getElementById("organ-picker").style.display = "none";
+    document.getElementById("game-hud").style.display = "block";
+    document.getElementById("game-over-banner").style.display = "none";
+    enableActions(true);
+}
+
+// ── Block/unblock actions ──
+function enableActions(enabled) {
+    document.querySelectorAll(".game-action").forEach(btn => {
+        btn.disabled = !enabled;
+    });
+    document.getElementById("btn-ai").disabled = !enabled;
+    const slider = document.getElementById("dose-slider");
+    if (slider) slider.disabled = !enabled;
+    const aslider = document.getElementById("antiangio-slider");
+    if (aslider) aslider.disabled = !enabled;
+}
+
+function showGameOver(outcome, score) {
+    gameOver = true;
+    enableActions(false);
+    const banner = document.getElementById("game-over-banner");
+    const labels = {
+        "victoire_totale": "🏆 Victoire totale !",
+        "controle_durable": "✅ Contrôle durable !",
+        "echec_controle": "❌ Échec du contrôle",
+        "toxicite_letale": "💀 Toxicité léthale",
+        "progression": "📈 Progression tumorale"
+    };
+    const isWin = outcome === "victoire_totale" || outcome === "controle_durable";
+    banner.className = "game-over-banner" + (isWin ? " win" : "");
+    banner.innerHTML = (labels[outcome] || outcome) + " — Score : " + (score || 0).toFixed(0) +
+        "<br><a href='" + "{{ url_for('home') }}' class='btn btn-small' style='margin-top:8px;'>Nouvelle partie</a>" +
+        "<a href='" + "{{ url_for('leaderboard') }}' class='btn btn-secondary btn-small' style='margin-top:8px; margin-left:8px;'>Voir le classement</a>";
+    banner.style.display = "block";
+}
+
+// ── Do action ──
+async function doAction(action) {
+    if (gameOver || requestInFlight) return;
+    requestInFlight = true;
+    enableActions(false);
+    try {
+    const res = await fetch("/api/game/step", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({action: action})
+    });
+    const data = await res.json();
+    if (!data.ok) { alert("Erreur: " + data.error); return; }
+    gameData = data.observation;
+    history.push({day: data.day, obs: data.observation});
+    updateUI(data.observation);
+    drawTumor(data.observation);
+    drawChart();
+    addLog(`J${data.day} — ${action.type}${action.dose_gy ? " " + action.dose_gy + " Gy" : ""} → ${data.outcome === "en_cours" ? "✓" : data.outcome}`);
+
+    if (data.done) {
+        showGameOver(data.outcome, data.observation.score);
+        addLog("🏁 Partie terminée — Score: " + (data.observation.score || 0).toFixed(0));
+    }
+    } catch (e) {
+        alert("Le calcul n'a pas pu aboutir : " + e.message);
+    } finally {
+        requestInFlight = false;
+        if (!gameOver) enableActions(true);
+    }
+}
+
+function doIrradiate() {
+    if (gameOver) return;
+    const dose = parseFloat(document.getElementById("dose-slider").value);
+    doAction({type: "irradiate", dose_gy: dose});
+}
+
+function doAntiangio() {
+    if (gameOver) return;
+    const intensity = parseFloat(document.getElementById("antiangio-slider").value);
+    doAction({type: "antiangiogenic", intensity: intensity});
+}
+
+// ── AI turn ──
+async function runAI() {
+    if (gameOver) return;
+    const aiRes = await fetch("/api/game/ai", {method: "POST"});
+    const aiData = await aiRes.json();
+    if (!aiData.ok) return;
+    addLog("🤖 IA: " + aiData.action.reason);
+    await doAction(aiData.action);
+}
+
+// ── Update UI ──
+function updateUI(obs) {
+    document.getElementById("day").textContent = obs.day || "—";
+    document.getElementById("diameter").textContent = (obs.diameter_um_observed || 0).toFixed(0) + " µm";
+    document.getElementById("toxicity").textContent = (obs.toxicity_score || 0).toFixed(1);
+    document.getElementById("dose").textContent = (obs.dose_budget_remaining_gy || 0).toFixed(1) + " Gy";
+    document.getElementById("score").textContent = (obs.score || 0).toFixed(0);
+    document.getElementById("regime").textContent = obs.model_regime || "—";
+    document.getElementById("vascular").textContent = (obs.vascular_activity || 0).toFixed(3);
+
+    // Bars
+    document.getElementById("diameter-bar").style.width = Math.min((obs.diameter_um_observed || 0) / 2000 * 100, 100) + "%";
+    const toxPct = Math.min((obs.toxicity_score || 0) / 50 * 100, 100);
+    const toxBar = document.getElementById("tox-bar");
+    toxBar.style.width = toxPct + "%";
+    toxBar.className = "bar-fill " + (toxPct > 50 ? "red" : toxPct > 20 ? "orange" : "green");
+    document.getElementById("dose-bar").style.width = Math.max((obs.dose_budget_remaining_gy || 0) / 80 * 100, 0) + "%";
+
+    // Exam
+    if (obs.last_biopsy) {
+        document.getElementById("last-exam").innerHTML =
+            "🔬 Biopsie J" + obs.last_biopsy.day + ": résistance " +
+            obs.last_biopsy.resistance_pct_estimated.toFixed(1) + "%";
+    }
+    if (obs.last_po2_imaging) {
+        document.getElementById("last-exam").innerHTML =
+            "🫁 pO₂ J" + obs.last_po2_imaging.day + ": centre " +
+            obs.last_po2_imaging.central_po2_mmHg.toFixed(1) + " mmHg";
+    }
+}
+
+// ── Draw tumor ──
+function drawTumor(observation) {
+    const cv = document.getElementById("tumor-cv");
+    const ctx = cv.getContext("2d");
+    const W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const cx = W / 2, cy = H / 2;
+    const maxR = Math.min(W, H) / 2 - 20;
+    const diam = observation.diameter_um_observed || 200;
+    // La coupe est volontairement schématique : le rayon nécrotique réel reste
+    // une variable serveur non transmise au navigateur.
+    const necro = 0;
+    const r = Math.min(diam / 2 / 1000 * maxR, maxR);
+    const rn = Math.min(necro / 1000 * maxR, r);
+
+    // Outer viable ring (green)
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+    ctx.fillStyle = "#a8d5a2";
+    ctx.fill();
+    ctx.strokeStyle = "#6aaa64";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Necrotic core (brown)
+    if (rn > 1) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, rn, 0, 2 * Math.PI);
+        ctx.fillStyle = "#c9a86c";
+        ctx.fill();
+    }
+
+    // Hypoxic zone (yellow ring)
+    const rhyp = rn + (r - rn) * 0.3;
+    if (rhyp > rn + 2) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, rhyp, 0, 2 * Math.PI);
+        ctx.fillStyle = "rgba(255,235,59,0.3)";
+        ctx.fill();
+    }
+
+    // Label
+    ctx.fillStyle = document.body.classList.contains("dark") ? "#e0e0e0" : "#333";
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Ø " + diam.toFixed(0) + " µm", cx, cy + r + 18);
+}
+
+// ── Draw chart ──
+function drawChart() {
+    if (history.length < 2) return;
+    const cv = document.getElementById("chart-cv");
+    const ctx = cv.getContext("2d");
+    const W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const diameters = history.map(h => h.obs.diameter_um_observed || 0);
+    const tox = history.map(h => h.obs.toxicity_score || 0);
+
+    const maxD = Math.max(...diameters, 100);
+    const maxT = Math.max(...tox, 10);
+    const pad = 30;
+
+    // Diameter line (blue)
+    ctx.beginPath();
+    ctx.strokeStyle = "#3498db";
+    ctx.lineWidth = 2;
+    history.forEach((h, i) => {
+        const x = pad + (i / (history.length - 1)) * (W - 2 * pad);
+        const y = H - pad - (diameters[i] / maxD) * (H - 2 * pad);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Toxicity line (red)
+    ctx.beginPath();
+    ctx.strokeStyle = "#e74c3c";
+    ctx.lineWidth = 2;
+    history.forEach((h, i) => {
+        const x = pad + (i / (history.length - 1)) * (W - 2 * pad);
+        const y = H - pad - (tox[i] / maxT) * (H - 2 * pad);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Legend
+    ctx.font = "11px Arial";
+    ctx.fillStyle = "#3498db";
+    ctx.fillText("Diamètre", W - 100, 15);
+    ctx.fillStyle = "#e74c3c";
+    ctx.fillText("Toxicité", W - 100, 30);
+}
+
+// ── Log ──
+function addLog(msg) {
+    const el = document.getElementById("log");
+    el.innerHTML += "\n" + msg;
+    el.scrollTop = el.scrollHeight;
+}
+</script>
+
+{% endblock %}

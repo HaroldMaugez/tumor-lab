@@ -1,0 +1,85 @@
+# .gitignore pour un projet Unity contenant le moteur Python
+# -> à copier à la RACINE du projet Unity, renommé en ".gitignore"
+#
+# Règle générale : on ne versionne QUE Assets/, Packages/ et ProjectSettings/.
+# Tout le reste est régénéré par Unity à l'ouverture du projet.
+
+# ---------------------------------------------------------------------------
+# Unity — dossiers régénérés automatiquement (ne JAMAIS versionner)
+# ---------------------------------------------------------------------------
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# Library/ peut peser plusieurs Go : c'est LA raison n°1 des dépôts Unity
+# obèses. Elle est intégralement reconstruite au premier lancement.
+
+# ---------------------------------------------------------------------------
+# Fichiers de solution / IDE générés
+# ---------------------------------------------------------------------------
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+.vs/
+.idea/
+.vscode/
+*.DS_Store
+
+# ---------------------------------------------------------------------------
+# Sorties de build
+# ---------------------------------------------------------------------------
+ExportedObj/
+.consulo/
+*.apk
+*.aab
+*.unitypackage
+*.app
+crashlytics-build.properties
+
+# ---------------------------------------------------------------------------
+# Moteur Python embarqué dans StreamingAssets
+# ---------------------------------------------------------------------------
+# On VERSIONNE le code Python (.py) : c'est l'actif scientifique.
+# On ignore uniquement ce qui est généré.
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+env/
+
+# Environnement Python portable éventuellement embarqué pour la distribution :
+# plusieurs centaines de Mo, à distribuer autrement (release, installeur).
+Assets/StreamingAssets/python-runtime/
+
+# ---------------------------------------------------------------------------
+# Sorties de simulation (régénérables via run_simulation.py)
+# ---------------------------------------------------------------------------
+# Décommentez si vous ne voulez pas versionner les figures :
+# Assets/StreamingAssets/tumorsim/results/*.png
+# Les .json de calibration, eux, MÉRITENT d'être versionnés : ils
+# documentent l'état calibré du modèle.
+
+# Traces de parties enregistrées pour l'apprentissage par imitation :
+# elles peuvent grossir vite. À stocker hors dépôt ou en LFS.
+*.jsonl
+!demo_trace.jsonl

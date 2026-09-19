@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tumor Lab{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<nav>
+    <span class="brand">Tumor Lab</span>
+    <div>
+        <a href="{{ url_for('home') }}">Accueil</a>
+        <a href="{{ url_for('leaderboard') }}">Classement</a>
+        <a href="{{ url_for('tests_page') }}">Tests</a>
+        <a href="{{ url_for('references') }}">Références</a>
+        {% if user %}
+            <a href="#">{{ user.username }}</a>
+            <a href="{{ url_for('logout') }}">Déconnexion</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Connexion</a>
+            <a href="{{ url_for('register') }}">Inscription</a>
+        {% endif %}
+        <button class="dark-toggle" onclick="toggleDark()" id="dark-btn">🌙</button>
+    </div>
+</nav>
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+<script>
+function toggleDark() {
+    document.body.classList.toggle('dark');
+    const isDark = document.body.classList.contains('dark');
+    localStorage.setItem('dark', isDark ? '1' : '0');
+    document.getElementById('dark-btn').textContent = isDark ? '☀️' : '🌙';
+}
+if (localStorage.getItem('dark') === '1') {
+    document.body.classList.add('dark');
+    document.getElementById('dark-btn').textContent = '☀️';
+}
+</script>
+</body>
+</html>

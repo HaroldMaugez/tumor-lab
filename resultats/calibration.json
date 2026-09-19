@@ -1,0 +1,11 @@
+{
+ "best": {
+  "f_atp_maint": 0.3704439124144562,
+  "f_atp_death": 0.35192171679373335,
+  "s50_growth": 0.1362958510704134,
+  "lac_death_weight": 2.846319505309731,
+  "q_glc_max": 1.4867027725819886e-16
+ },
+ "cost": 2.7807,
+ "note": "calibration a 5 ddl incluant lac_death_weight"
+}

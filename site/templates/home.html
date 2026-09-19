@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Tumor Lab — Accueil{% endblock %}
+{% block content %}
+
+<h1>Tumor Lab</h1>
+<p class="text-muted">Simulateur mécaniste de croissance tumorale et jeu de stratégie.</p>
+
+<div class="alert alert-info">
+    Ce modèle est éducatif et théorique. Ce n'est pas un dispositif médical.
+</div>
+
+{% if user %}
+    <div class="card">
+        <h2>Bonjour {{ user.username }}</h2>
+        <p>Choisissez un mode de jeu pour commencer.</p>
+    </div>
+
+    <h2>Modes de jeu</h2>
+    <div class="scenario-grid">
+        {% for key, info in scenarios.items() %}
+        <a href="{{ url_for('play', scenario=key) }}" style="text-decoration:none; color:inherit;">
+            <div class="scenario-card">
+                <div class="icon">{{ info.icon }}</div>
+                <h3>{{ info.name }}</h3>
+                <p>{{ info.desc }}</p>
+                <span class="btn btn-small">Jouer</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="mt">
+        <a href="{{ url_for('leaderboard') }}" class="btn btn-secondary">Voir le classement</a>
+    </div>
+
+{% else %}
+    <div class="card">
+        <h2>Bienvenue</h2>
+        <p>Inscrivez-vous ou connectez-vous pour jouer.</p>
+        <div class="mt">
+            <a href="{{ url_for('register') }}" class="btn btn-success">Créer un compte</a>
+            <a href="{{ url_for('login') }}" class="btn" style="margin-left:8px;">Se connecter</a>
+        </div>
+    </div>
+
+    <h2>Modes de jeu</h2>
+    <div class="scenario-grid">
+        {% for key, info in scenarios.items() %}
+        <div class="scenario-card">
+            <div class="icon">{{ info.icon }}</div>
+            <h3>{{ info.name }}</h3>
+            <p>{{ info.desc }}</p>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<!-- ═══════════ Résultats scientifiques ═══════════ -->
+<section id="results" style="margin-top:40px;">
+    <h2>Résultats <span style="color:#3498db;">Scientifiques</span></h2>
+    <p class="text-muted" style="margin-bottom:20px;">Figures générées par le moteur — comparées à des données publiées ; les limites sont documentées dans le rapport.</p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(350px, 1fr)); gap:20px;">
+        <div class="card" style="padding:0; overflow:hidden;">
+            <img src="{{ url_for('static', filename='results/fig1_croissance.png') }}" alt="Courbes de croissance" style="width:100%; display:block;">
+            <div style="padding:12px;">
+                <strong>Fig. 1 — Croissance avasculaire</strong>
+                <p class="text-muted" style="margin-top:4px;">Cinétique du diamètre, populations cellulaires et microenvironnement central d'un sphéroïde EMT6/Ro.</p>
+            </div>
+        </div>
+
+        <div class="card" style="padding:0; overflow:hidden;">
+            <img src="{{ url_for('static', filename='results/fig2_profils_radiaux.png') }}" alt="Profils radiaux" style="width:100%; display:block;">
+            <div style="padding:12px;">
+                <strong>Fig. 2 — Profils radiaux</strong>
+                <p class="text-muted" style="margin-top:4px;">Distribution spatiale de l'oxygène, du glucose, du pH et de la viabilité à plusieurs instants.</p>
+            </div>
+        </div>
+
+        <div class="card" style="padding:0; overflow:hidden;">
+            <img src="{{ url_for('static', filename='results/fig3_coupe_spheroide.png') }}" alt="Coupe du sphéroïde" style="width:100%; display:block;">
+            <div style="padding:12px;">
+                <strong>Fig. 3 — Coupe du sphéroïde</strong>
+                <p class="text-muted" style="margin-top:4px;">Visualisation 2D de la structure interne : couronne viable, cœur hypoxique et nécrose centrale.</p>
+            </div>
+        </div>
+
+        <div class="card" style="padding:0; overflow:hidden;">
+            <img src="{{ url_for('static', filename='results/fig4_milieux.png') }}" alt="Effet des nutriments" style="width:100%; display:block;">
+            <div style="padding:12px;">
+                <strong>Fig. 4 — Effet des nutriments</strong>
+                <p class="text-muted" style="margin-top:4px;">Reproduction du protocole Freyer &amp; Sutherland (1986) : l'apport en O₂ et glucose contrôle la taille finale.</p>
+            </div>
+        </div>
+
+        <div class="card" style="padding:0; overflow:hidden;">
+            <img src="{{ url_for('static', filename='results/fig5_radiotherapie.png') }}" alt="Radiothérapie fractionnée" style="width:100%; display:block;">
+            <div style="padding:12px;">
+                <strong>Fig. 5 — Radiothérapie fractionnée</strong>
+                <p class="text-muted" style="margin-top:4px;">Comparaison témoin / irradié : l'hypoxie induit une radiorésistance mesurable dans le cœur tumoral.</p>
+            </div>
+        </div>
+
+        <div class="card" style="padding:0; overflow:hidden;">
+            <img src="{{ url_for('static', filename='results/fig6_modele_agents.png') }}" alt="Modèle à agents 3D" style="width:100%; display:block;">
+            <div style="padding:12px;">
+                <strong>Fig. 6 — Modèle à agents</strong>
+                <p class="text-muted" style="margin-top:4px;">Simulation cellule par cellule en 3D, validation croisée du modèle continu.</p>
+            </div>
+        </div>
+
+        <div class="card" style="padding:0; overflow:hidden;">
+            <img src="{{ url_for('static', filename='results/fig7_validation.png') }}" alt="Vérification et validation" style="width:100%; display:block;">
+            <div style="padding:12px;">
+                <strong>Fig. 7 — Validation</strong>
+                <p class="text-muted" style="margin-top:4px;">31/32 checks réussis contre les données publiées. L'écart connu sur la nécrose en milieu riche est documenté.</p>
+            </div>
+        </div>
+
+        <div class="card" style="padding:0; overflow:hidden;">
+            <img src="{{ url_for('static', filename='results/fig8_evolution.png') }}" alt="Évolution darwinienne" style="width:100%; display:block;">
+            <div style="padding:12px;">
+                <strong>Fig. 8 — Évolution darwinienne</strong>
+                <p class="text-muted" style="margin-top:4px;">Mutation, dérive et sélection — spectre allélique validé par la loi 1/f (R² ≈ 0.99).</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════ Équipe ═══════════ -->
+<section id="team" style="margin-top:50px;">
+    <h2>L'<span style="color:#3498db;">équipe</span></h2>
+
+    <div style="display:flex; justify-content:center; margin-top:20px;">
+        <div class="card" style="text-align:center; padding:32px 48px; max-width:360px;">
+            <div style="width:90px; height:90px; border-radius:50%; margin:0 auto 14px; background:linear-gradient(135deg, #1a237e, #3498db); display:flex; align-items:center; justify-content:center; font-size:2.2rem; color:white;">👨‍🔬</div>
+            <h3 style="margin-bottom:4px;">Harold Maugez</h3>
+            <p class="text-muted" style="color:#3498db; font-size:13px; margin-bottom:8px;">Créateur & développeur</p>
+            <p class="text-muted" style="font-size:12px;">Modélisation mathématique, moteur de simulation, solveur de transport, interface Unity et site web.</p>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
