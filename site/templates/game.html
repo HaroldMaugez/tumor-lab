@@ -177,7 +177,8 @@ async function fetchJSON(url, options) {
         data = null;
     }
     if (!res.ok) {
-        const detail = data && data.error ? data.error :
+        const detail = data && data.detail ? `${data.error || "Erreur serveur"} (${data.detail})` :
+            data && data.error ? data.error :
             `Le serveur a répondu ${res.status} (${res.statusText}).`;
         throw new Error(detail);
     }

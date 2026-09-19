@@ -351,9 +351,13 @@ def api_step():
     try:
         with _game_lock:
             result = game.step(action)
-    except Exception:
+    except Exception as exc:
         app.logger.exception("Erreur pendant le calcul d'un tour")
-        return jsonify({"ok": False, "error": "Le calcul du tour a échoué côté serveur."}), 500
+        return jsonify({
+            "ok": False,
+            "error": "Le calcul du tour a échoué côté serveur.",
+            "detail": str(exc) or type(exc).__name__,
+        }), 500
     resp = {        "ok": True,
         "turn": result.turn,
         "day": round(result.day, 2),
