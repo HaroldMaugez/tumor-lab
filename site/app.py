@@ -21,6 +21,7 @@ from flask import (
     Flask, render_template, request, redirect, url_for,
     session, jsonify,
 )
+from werkzeug.exceptions import HTTPException
 
 # --- Python engine path ---------------------------------------------------
 ENGINE_DIR = str(Path(__file__).resolve().parent.parent)
@@ -41,6 +42,29 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=os.environ.get("TUMORLAB_COOKIE_SECURE", "0") == "1",
 )
+
+
+@app.errorhandler(Exception)
+def handle_api_error(error):
+    """Keep API failures JSON so the browser can show the real HTTP error.
+
+    Flask's default 500 page is HTML, which otherwise causes a misleading
+    ``JSON.parse: unexpected character`` error in the game interface.
+    """
+    if not request.path.startswith("/api/"):
+        if isinstance(error, HTTPException):
+            return error
+        app.logger.exception("Erreur page %s", request.path)
+        return "Une erreur interne est survenue.", 500
+    if isinstance(error, HTTPException):
+        status = error.code or 500
+        message = error.description
+    else:
+        status = 500
+        message = "Erreur interne pendant le calcul."
+        app.logger.exception("Erreur API %s", request.path)
+    return jsonify({"ok": False, "error": message}), status
+
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "tumorlab.db")
 
@@ -324,10 +348,13 @@ def api_step():
     action = data.get("action", {"type": "wait"})
     # Le solveur est volontairement exécuté côté serveur, mais jamais deux fois
     # en parallèle pour le même état. L'état truth reste strictement serveur.
-    with _game_lock:
-        result = game.step(action)
-    resp = {
-        "ok": True,
+    try:
+        with _game_lock:
+            result = game.step(action)
+    except Exception:
+        app.logger.exception("Erreur pendant le calcul d'un tour")
+        return jsonify({"ok": False, "error": "Le calcul du tour a échoué côté serveur."}), 500
+    resp = {        "ok": True,
         "turn": result.turn,
         "day": round(result.day, 2),
         "observation": _jsonable(result.observation),

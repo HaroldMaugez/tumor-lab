@@ -164,6 +164,29 @@ let requestInFlight = false;
 let selectedOrgan = "generique_tardif";
 let selectedSparing = 0.6;
 
+// Les erreurs 500 de Flask sont souvent des pages HTML : afficher un message
+// exploitable plutôt que « JSON.parse: unexpected character ».
+async function fetchJSON(url, options) {
+    const res = await fetch(url, options);
+    const contentType = res.headers.get("content-type") || "";
+    const body = await res.text();
+    let data;
+    try {
+        data = contentType.includes("application/json") ? JSON.parse(body) : null;
+    } catch (_) {
+        data = null;
+    }
+    if (!res.ok) {
+        const detail = data && data.error ? data.error :
+            `Le serveur a répondu ${res.status} (${res.statusText}).`;
+        throw new Error(detail);
+    }
+    if (!data) {
+        throw new Error("Le serveur a renvoyé une réponse inattendue (pas du JSON).");
+    }
+    return data;
+}
+
 // ── Organ picker ──
 function pickOrgan(el) {
     document.querySelectorAll(".organ-picker-card").forEach(c => c.classList.remove("selected"));
@@ -174,17 +197,17 @@ function pickOrgan(el) {
 
 // ── Start game ──
 async function startGame() {
-    const res = await fetch("/api/game/reset", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            scenario: SCENARIO,
-            seed: Math.floor(Math.random()*99999),
-            organ: selectedOrgan,
-            sparing_factor: selectedSparing
-        })
-    });
-    const data = await res.json();
+    try {
+        const data = await fetchJSON("/api/game/reset", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                scenario: SCENARIO,
+                seed: Math.floor(Math.random()*99999),
+                organ: selectedOrgan,
+                sparing_factor: selectedSparing
+            })
+        });
     if (!data.ok) { alert("Erreur: " + data.error); return; }
     gameData = data.observation;
     history = [];
@@ -198,7 +221,10 @@ async function startGame() {
     document.getElementById("organ-picker").style.display = "none";
     document.getElementById("game-hud").style.display = "block";
     document.getElementById("game-over-banner").style.display = "none";
-    enableActions(true);
+        enableActions(true);
+    } catch (e) {
+        alert("Impossible de démarrer la partie : " + e.message);
+    }
 }
 
 // ── Block/unblock actions ──
@@ -238,12 +264,11 @@ async function doAction(action) {
     requestInFlight = true;
     enableActions(false);
     try {
-    const res = await fetch("/api/game/step", {
+    const data = await fetchJSON("/api/game/step", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({action: action})
     });
-    const data = await res.json();
     if (!data.ok) { alert("Erreur: " + data.error); return; }
     gameData = data.observation;
     history.push({day: data.day, obs: data.observation});
@@ -279,8 +304,7 @@ function doAntiangio() {
 // ── AI turn ──
 async function runAI() {
     if (gameOver) return;
-    const aiRes = await fetch("/api/game/ai", {method: "POST"});
-    const aiData = await aiRes.json();
+    const aiData = await fetchJSON("/api/game/ai", {method: "POST"});
     if (!aiData.ok) return;
     addLog("🤖 IA: " + aiData.action.reason);
     await doAction(aiData.action);
