@@ -6,8 +6,11 @@ Ouvre        :  http://localhost:5000
 """
 from __future__ import annotations
 
+import csv
+import io
 import json
 import os
+import pickle
 import sys
 import time
 import threading
@@ -19,7 +22,7 @@ from pathlib import Path
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    session, jsonify,
+    session, jsonify, Response,
 )
 from werkzeug.exceptions import HTTPException
 
@@ -99,10 +102,23 @@ def init_db():
             dose_gy REAL DEFAULT 0,
             toxicity REAL DEFAULT 0,
             diameter_end REAL DEFAULT 0,
+            trace_json TEXT DEFAULT '',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
+        CREATE TABLE IF NOT EXISTS active_games (
+            user_id INTEGER PRIMARY KEY,
+            scenario TEXT NOT NULL,
+            state BLOB NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
     """)
+    # Migration for databases created before trace_json was introduced.
+    try:
+        conn.execute("ALTER TABLE games ADD COLUMN trace_json TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
 
@@ -218,6 +234,50 @@ def play(scenario):
     return render_template("game.html", scenario=scenario, user=get_current_user())
 
 
+@app.route("/api/game/export")
+@login_required
+def api_game_export():
+    """Export the current or last active game for analysis."""
+    game = _get_game(session["user_id"])
+    if game is None:
+        return jsonify({"ok": False, "error": "Aucune partie disponible."}), 404
+    fmt = request.args.get("format", "json").lower()
+    payload = {
+        "scenario": game.cfg.model_regime,
+        "config": _jsonable(vars(game.cfg)),
+        "observation": _jsonable(game.observe()),
+        "history": _jsonable(game.history),
+    }
+    if fmt == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["tour", "jour", "action", "diametre_um", "toxicite", "score", "resultat"])
+        for item in game.history:
+            truth = item.get("truth", {})
+            writer.writerow([
+                item.get("turn", ""), truth.get("day", ""),
+                item.get("action", {}).get("type", ""),
+                truth.get("diameter_um", ""), truth.get("toxicity_score", ""),
+                item.get("score", ""), game.outcome,
+            ])
+        return Response(
+            output.getvalue(), mimetype="text/csv",
+            headers={"Content-Disposition": "attachment; filename=tumor-lab-partie.csv"},
+        )
+    if fmt != "json":
+        return jsonify({"ok": False, "error": "Format demandé inconnu."}), 400
+    return Response(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        mimetype="application/json",
+        headers={"Content-Disposition": "attachment; filename=tumor-lab-partie.json"},
+    )
+
+
+@app.route("/learn")
+def learn():
+    return render_template("learn.html", user=get_current_user())
+
+
 @app.route("/leaderboard")
 def leaderboard():
     db = get_db()
@@ -298,7 +358,39 @@ _game_lock = threading.RLock()
 
 
 def _get_game(user_id: int) -> TumorGame | None:
-    return _games.get(user_id)
+    """Load the game from SQLite so it survives worker changes/reloads."""
+    game = _games.get(user_id)
+    if game is not None:
+        return game
+    db = get_db()
+    row = db.execute(
+        "SELECT state FROM active_games WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    db.close()
+    if row is None:
+        return None
+    try:
+        game = pickle.loads(row["state"])
+    except (pickle.PickleError, EOFError, AttributeError, ImportError, ValueError):
+        app.logger.exception("Impossible de restaurer la partie de l'utilisateur %s", user_id)
+        return None
+    _games[user_id] = game
+    return game
+
+
+def _save_active_game(user_id: int, scenario: str, game: TumorGame) -> None:
+    state = sqlite3.Binary(pickle.dumps(game, protocol=pickle.HIGHEST_PROTOCOL))
+    db = get_db()
+    db.execute("""
+        INSERT INTO active_games (user_id, scenario, state, updated_at)
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(user_id) DO UPDATE SET
+            scenario = excluded.scenario,
+            state = excluded.state,
+            updated_at = CURRENT_TIMESTAMP
+    """, (user_id, scenario, state))
+    db.commit()
+    db.close()
 
 
 def _jsonable(o):
@@ -333,6 +425,7 @@ def api_reset():
     game = TumorGame(cfg)
     with _game_lock:
         _games[session["user_id"]] = game
+        _save_active_game(session["user_id"], scenario, game)
         obs = game.observe()
     return jsonify({"ok": True, "observation": _jsonable(obs),
                     "scenarios": list(SCENARIOS.keys())})
@@ -351,6 +444,7 @@ def api_step():
     try:
         with _game_lock:
             result = game.step(action)
+            _save_active_game(session["user_id"], game.cfg.model_regime, game)
     except Exception as exc:
         app.logger.exception("Erreur pendant le calcul d'un tour")
         return jsonify({
@@ -487,15 +581,16 @@ def _save_game_result(user_id: int, game: TumorGame, result):
         db = get_db()
         db.execute("""
             INSERT INTO games (user_id, scenario, score, outcome, turns, dose_gy,
-                               toxicity, diameter_end)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                               toxicity, diameter_end, trace_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (user_id, game.cfg.model_regime,
               round(truth.get("score", 0), 1),
               result.outcome,
               result.turn,
               round(truth.get("dose_delivered_gy", 0), 1),
               round(truth.get("toxicity_score", 0), 1),
-              round(truth.get("diameter_um", 0), 0)))
+              round(truth.get("diameter_um", 0), 0),
+              json.dumps(_jsonable(game.history), ensure_ascii=False)))
         db.commit()
         db.close()
     except Exception:

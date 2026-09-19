@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Comprendre le modèle — Tumor Lab{% endblock %}
+{% block content %}
+<h1>Comprendre Tumor Lab</h1>
+<p class="text-muted">Une présentation simple des mécanismes simulés et de leurs limites.</p>
+
+<div class="alert alert-info">
+    Tumor Lab est un outil pédagogique et expérimental. Il ne constitue pas un dispositif médical et ne doit pas servir à choisir un traitement réel.
+</div>
+
+<div class="card">
+    <h2>Le principe du jeu</h2>
+    <p>Chaque tour représente une évolution de la tumeur. Vous observez des mesures imparfaites, choisissez une action, puis le moteur calcule la croissance, la réponse au traitement et l'état du patient.</p>
+    <p style="margin-top:10px;">L'objectif n'est pas seulement de réduire la tumeur : il faut aussi préserver les tissus sains et éviter de sélectionner des cellules résistantes.</p>
+</div>
+
+<div class="scenario-grid">
+    <div class="card">
+        <h2>Hypoxie</h2>
+        <p>Une tumeur qui grossit peut présenter un manque d'oxygène au centre. L'hypoxie réduit l'efficacité des radiations et crée un environnement différent pour les cellules.</p>
+    </div>
+    <div class="card">
+        <h2>Résistance</h2>
+        <p>Les cellules n'ont pas toutes la même radiosensibilité. Une dose peut éliminer les cellules sensibles tout en laissant davantage de place aux clones résistants.</p>
+    </div>
+    <div class="card">
+        <h2>Toxicité</h2>
+        <p>Chaque fraction de radiation contribue à la dose reçue par l'organe sain. Le modèle utilise une estimation de la probabilité de complication pour représenter ce compromis.</p>
+    </div>
+    <div class="card">
+        <h2>Vascularisation</h2>
+        <p>Dans le scénario humain fictif, le réseau vasculaire modifie l'apport d'oxygène et la dynamique tumorale. L'action anti-angiogénique est une mécanique de scénario.</p>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Pourquoi les examens sont utiles ?</h2>
+    <ul style="padding-left:22px;">
+        <li><strong>Biopsie :</strong> donne une estimation bruitée de la résistance.</li>
+        <li><strong>Imagerie pO₂ :</strong> révèle la distribution de l'oxygène.</li>
+        <li><strong>Observation :</strong> le diamètre et les marqueurs comportent volontairement du bruit.</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h2>Limites scientifiques</h2>
+    <p>Le moteur combine des modèles continus, des paramètres issus de la littérature et des fermetures propres aux scénarios. Il simplifie fortement l'immunité, la pharmacologie, l'anatomie, la perfusion et la variabilité entre patients. Les modes vascularisés sont explicitement fictifs et ne sont pas des prédictions cliniques.</p>
+    <p style="margin-top:10px;">Les références et les détails techniques sont disponibles dans la page <a href="{{ url_for('references') }}">Références</a>.</p>
+</div>
+{% endblock %}

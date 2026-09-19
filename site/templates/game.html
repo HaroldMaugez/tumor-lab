@@ -255,7 +255,9 @@ function showGameOver(outcome, score) {
     banner.className = "game-over-banner" + (isWin ? " win" : "");
     banner.innerHTML = (labels[outcome] || outcome) + " — Score : " + (score || 0).toFixed(0) +
         "<br><a href='" + "{{ url_for('home') }}' class='btn btn-small' style='margin-top:8px;'>Nouvelle partie</a>" +
-        "<a href='" + "{{ url_for('leaderboard') }}' class='btn btn-secondary btn-small' style='margin-top:8px; margin-left:8px;'>Voir le classement</a>";
+        "<a href='" + "{{ url_for('leaderboard') }}' class='btn btn-secondary btn-small' style='margin-top:8px; margin-left:8px;'>Voir le classement</a>" +
+        "<br><a href='/api/game/export?format=json' class='btn btn-secondary btn-small' style='margin-top:8px;'>Exporter JSON</a>" +
+        "<a href='/api/game/export?format=csv' class='btn btn-secondary btn-small' style='margin-top:8px; margin-left:8px;'>Exporter CSV</a>";
     banner.style.display = "block";
 }
 

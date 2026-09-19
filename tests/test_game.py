@@ -1,4 +1,5 @@
 import json
+import pickle
 import subprocess
 import sys
 import unittest
@@ -46,6 +47,13 @@ class GameContractTests(unittest.TestCase):
                 game = TumorGame(make_config("standard", seed=2, organ=organ))
                 result = game.step({"type": "irradiate", "dose_gy": 2.0})
                 self.assertIn("radiation", result.info)
+
+    def test_game_state_can_be_persisted(self):
+        game = TumorGame(make_config("standard", seed=2))
+        game.step({"type": "wait"})
+        restored = pickle.loads(pickle.dumps(game))
+        self.assertEqual(restored.turn, game.turn)
+        self.assertEqual(restored.observe()["day"], game.observe()["day"])
 
 
 class ServerContractTests(unittest.TestCase):

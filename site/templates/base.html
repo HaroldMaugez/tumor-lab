@@ -14,6 +14,7 @@
         <a href="{{ url_for('leaderboard') }}">Classement</a>
         <a href="{{ url_for('tests_page') }}">Tests</a>
         <a href="{{ url_for('references') }}">Références</a>
+        <a href="{{ url_for('learn') }}">Comprendre</a>
         {% if user %}
             <a href="#">{{ user.username }}</a>
             <a href="{{ url_for('logout') }}">Déconnexion</a>
