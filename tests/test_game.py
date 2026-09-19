@@ -35,6 +35,11 @@ class GameContractTests(unittest.TestCase):
         self.assertTrue(result.done)
         self.assertIsInstance(result.observation["score"], float)
 
+    def test_irradiation_turn_completes(self):
+        game = TumorGame(make_config("standard", seed=2))
+        result = game.step({"type": "irradiate", "dose_gy": 2.0})
+        self.assertIn("radiation", result.info)
+
 
 class ServerContractTests(unittest.TestCase):
     def test_provenance_is_explicitly_scenario_level(self):
