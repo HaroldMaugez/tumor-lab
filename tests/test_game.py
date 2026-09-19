@@ -40,6 +40,13 @@ class GameContractTests(unittest.TestCase):
         result = game.step({"type": "irradiate", "dose_gy": 2.0})
         self.assertIn("radiation", result.info)
 
+    def test_all_ui_organs_can_start_and_irradiate(self):
+        for organ in ("generique_tardif", "poumon", "sein", "colorectal", "cerveau"):
+            with self.subTest(organ=organ):
+                game = TumorGame(make_config("standard", seed=2, organ=organ))
+                result = game.step({"type": "irradiate", "dose_gy": 2.0})
+                self.assertIn("radiation", result.info)
+
 
 class ServerContractTests(unittest.TestCase):
     def test_provenance_is_explicitly_scenario_level(self):

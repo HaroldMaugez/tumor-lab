@@ -61,6 +61,16 @@ LKB_PARAMETERS: Dict[str, Tuple[float, float, float, str]] = {
     "oesophage": (51.0, 0.32, 0.44,
                   "ajustement par maximum de vraisemblance ; œsophagite aiguë "
                   "grade 2-3"),
+    # Nécrose cérébrale après irradiation : paramétrage LKB usuel de QUANTEC.
+    # Le jeu utilise « cerveau » dans son interface, d'où cette clé explicite.
+    "cerveau": (72.0, 0.15, 0.25,
+                "QUANTEC ; nécrose cérébrale radio-induite, TD50 ≈ 72 Gy"),
+    "sein": (72.0, 0.16, 0.35,
+             "Emami/Burman 1991 ; fibrose mammaire radio-induite"),
+    # L'interface parle de colorectal; le paramètre disponible dans les tables
+    # cliniques est celui du rectum, utilisé comme approximation du tissu sain.
+    "colorectal": (80.0, 0.15, 0.12,
+                    "Emami/Burman 1991 ; approximation rectale pour colorectal"),
     # Défaut du jeu : tissu à réponse tardive générique, valeurs médianes.
     "generique_tardif": (60.0, 0.15, 0.30,
                          "tissu sain à réponse tardive générique ; valeurs "
