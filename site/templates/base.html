@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,21 +8,30 @@
 </head>
 <body>
 <nav>
-    <span class="brand">Tumor Lab</span>
+    <a href="{{ url_for('home') }}" class="brand">🔬 Tumor Lab</a>
     <div>
-        <a href="{{ url_for('home') }}">Accueil</a>
-        <a href="{{ url_for('leaderboard') }}">Classement</a>
-        <a href="{{ url_for('tests_page') }}">Tests</a>
-        <a href="{{ url_for('references') }}">Références</a>
-        <a href="{{ url_for('learn') }}">Comprendre</a>
+        <a href="{{ url_for('home') }}">{{ "Home" if is_en else "Accueil" }}</a>
+        <a href="{{ url_for('play', scenario='tutoriel') }}"><strong>{{ "🎓 Tutorial" if is_en else "🎓 Tutoriel" }}</strong></a>
+        <a href="{{ url_for('learn') }}">{{ "How It Works" if is_en else "Comprendre" }}</a>
+        <a href="{{ url_for('leaderboard') }}">{{ "Leaderboard" if is_en else "Classement" }}</a>
+        <a href="{{ url_for('tests_page') }}">{{ "Validation (31/32)" if is_en else "Tests (31/32)" }}</a>
+        <a href="{{ url_for('references') }}">{{ "References" if is_en else "Références" }}</a>
         {% if user %}
-            <a href="#">{{ user.username }}</a>
-            <a href="{{ url_for('logout') }}">Déconnexion</a>
+            <span style="margin-left:14px; font-size:13px; opacity:0.85;">👤 {{ user.username }}</span>
+            {% if is_guest %}
+                <a href="{{ url_for('register') }}">{{ "Save Account" if is_en else "Créer un compte" }}</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}">{{ "Exit" if is_en else "Quitter" }}</a>
         {% else %}
-            <a href="{{ url_for('login') }}">Connexion</a>
-            <a href="{{ url_for('register') }}">Inscription</a>
+            <a href="{{ url_for('login') }}">{{ "Log in" if is_en else "Connexion" }}</a>
+            <a href="{{ url_for('register') }}">{{ "Sign up" if is_en else "Inscription" }}</a>
         {% endif %}
-        <button class="dark-toggle" onclick="toggleDark()" id="dark-btn">🌙</button>
+        {% if is_en %}
+            <a class="dark-toggle" href="{{ url_for('set_lang', lang_code='fr') }}" title="Passer le site en français">🇫🇷 FR</a>
+        {% else %}
+            <a class="dark-toggle" href="{{ url_for('set_lang', lang_code='en') }}" title="Switch site to English">🇬🇧 EN</a>
+        {% endif %}
+        <button class="dark-toggle" onclick="toggleDark()" id="dark-btn" title="Dark / Light mode">🌙</button>
     </div>
 </nav>
 <div class="container">

@@ -1,142 +1,183 @@
 {% extends "base.html" %}
-{% block title %}Tumor Lab — Accueil{% endblock %}
+{% block title %}Tumor Lab — {{ "Home" if is_en else "Accueil" }}{% endblock %}
 {% block content %}
 
 <h1>Tumor Lab</h1>
-<p class="text-muted">Simulateur mécaniste de croissance tumorale et jeu de stratégie.</p>
+<p class="text-muted" style="font-size:14px; margin-bottom:12px;">
+    {% if is_en %}
+        Interactive tumor detection, diagnostic imaging &amp; radiotherapy simulator — grounded in published oncology data, explained simply for everyone.
+    {% else %}
+        Simulateur interactif de détection, d'imagerie diagnostique et de traitement tumoral — fondé sur des données scientifiques publiées, expliqué simplement pour tous.
+    {% endif %}
+</p>
 
 <div class="alert alert-info">
-    Ce modèle est éducatif et théorique. Ce n'est pas un dispositif médical.
+    {% if is_en %}
+        <strong>Educational Notice:</strong> Tumor Lab is a theoretical and educational simulation, not a medical device or clinical treatment planner.
+    {% else %}
+        <strong>Note pédagogique :</strong> Ce modèle est éducatif et théorique. Ce n'est pas un dispositif médical ni un outil de prescription clinique.
+    {% endif %}
 </div>
 
-{% if user %}
-    <div class="card">
-        <h2>Bonjour {{ user.username }}</h2>
-        <p>Choisissez un mode de jeu pour commencer.</p>
-    </div>
-
-    <h2>Modes de jeu</h2>
-    <div class="scenario-grid">
-        {% for key, info in scenarios.items() %}
-        <a href="{{ url_for('play', scenario=key) }}" style="text-decoration:none; color:inherit;">
-            <div class="scenario-card">
-                <div class="icon">{{ info.icon }}</div>
-                <h3>{{ info.name }}</h3>
-                <p>{{ info.desc }}</p>
-                <span class="btn btn-small">Jouer</span>
-            </div>
+<!-- ═══════════ Beginner Onboarding Box (Zero Biology Required) ═══════════ -->
+<div class="tutorial-box">
+    <h2 style="margin-bottom:8px; color:#1e8449;">
+        {% if is_en %}
+            👋 New to biology or oncology? Start here in 1 click!
+        {% else %}
+            👋 Aucune connaissance en biologie ou en cancérologie ? Commencez ici !
+        {% endif %}
+    </h2>
+    <p style="font-size:14px; margin-bottom:10px;">
+        {% if is_en %}
+            You don't need any medical background to use Tumor Lab. Imagine stepping into the shoes of a doctor monitoring a tiny <strong>0.6 mm tumor</strong> (about the size of a grain of sand):
+        {% else %}
+            Vous n'avez besoin d'aucun prérequis scientifique. Imaginez-vous dans la peau d'un médecin qui suit une minuscule <strong>tumeur de 0,6 mm</strong> (la taille d'un grain de sable) :
+        {% endif %}
+    </p>
+    <ul style="padding-left:20px; font-size:13px; margin-bottom:14px;">
+        {% if is_en %}
+            <li><strong>1. Detect &amp; Monitor:</strong> Real medical scans have slight noise — you see estimated size and blood markers, never exact cell counts.</li>
+            <li><strong>2. Diagnose Hidden Risks:</strong> Run an <strong>Oxygen Scan (pO₂)</strong> to spot suffocating central cells (<em>hypoxia</em>) and a <strong>Biopsy</strong> to detect resistant cells before treating blindly.</li>
+            <li><strong>3. Treat Safely:</strong> Shrink or keep the tumor below <strong>400 µm</strong> using gentle radiation doses without hurting the healthy organ around it!</li>
+        {% else %}
+            <li><strong>1. Détecter et suivre :</strong> Comme à l'hôpital, les scanners ont une marge d'incertitude — vous voyez une taille estimée et un marqueur sanguin, jamais chaque cellule.</li>
+            <li><strong>2. Diagnostiquer l'invisible :</strong> Lancez une <strong>Imagerie d'oxygène (pO₂)</strong> pour repérer le manque d'air au centre (<em>hypoxie</em>) et une <strong>Biopsie</strong> pour détecter les cellules résistantes.</li>
+            <li><strong>3. Traiter sans nuire :</strong> Réduisez la tumeur sous <strong>400 µm</strong> avec de petites doses de rayons sans abîmer l'organe sain voisin !</li>
+        {% endif %}
+    </ul>
+    <div>
+        <a href="{{ url_for('play', scenario='tutoriel') }}" class="btn btn-success">
+            {{ "🎓 Start Guided Tutorial (No Account Needed)" if is_en else "🎓 Lancer le Tutoriel Guidé (Sans inscription)" }}
         </a>
-        {% endfor %}
+        <a href="{{ url_for('learn') }}" class="btn" style="margin-left:8px; margin-top:4px;">
+            {{ "📘 Learn the Basics in 3 Min (+ Mini-Quiz)" if is_en else "📘 Comprendre en 3 min (+ Mini-Quiz)" }}
+        </a>
     </div>
+</div>
 
-    <div class="mt">
-        <a href="{{ url_for('leaderboard') }}" class="btn btn-secondary">Voir le classement</a>
+<!-- ═══════════ Account / Guest Info ═══════════ -->
+{% if user %}
+    <div class="card" style="padding:14px 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+                <strong>
+                    {% if is_en %}Welcome, {{ user.username }}!{% else %}Bonjour {{ user.username }} !{% endif %}
+                </strong>
+                <span class="text-muted" style="margin-left:8px;">
+                    {% if is_guest %}
+                        {{ "(Guest mode — create an account anytime to keep a custom name on the leaderboard)" if is_en else "(Mode invité — créez un compte si vous voulez garder votre pseudo au classement)" }}
+                    {% else %}
+                        {{ "Pick any scenario below to start." if is_en else "Choisissez un mode ci-dessous pour jouer." }}
+                    {% endif %}
+                </span>
+            </div>
+            <a href="{{ url_for('leaderboard') }}" class="btn btn-secondary btn-small">
+                {{ "🏆 Leaderboard" if is_en else "🏆 Classement" }}
+            </a>
+        </div>
     </div>
-
 {% else %}
-    <div class="card">
-        <h2>Bienvenue</h2>
-        <p>Inscrivez-vous ou connectez-vous pour jouer.</p>
-        <div class="mt">
-            <a href="{{ url_for('register') }}" class="btn btn-success">Créer un compte</a>
-            <a href="{{ url_for('login') }}" class="btn" style="margin-left:8px;">Se connecter</a>
+    <div class="card" style="padding:14px 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+                <strong>{{ "Instant Access:" if is_en else "Accès immédiat :" }}</strong>
+                <span style="font-size:13px; color:#666;">
+                    {{ "Click any mode below to play right away as a Guest, or create an account to save your name on the Leaderboard." if is_en else "Cliquez directement sur un mode ci-dessous pour jouer en invité, ou créez un compte pour enregistrer votre pseudo." }}
+                </span>
+            </div>
+            <div>
+                <a href="{{ url_for('register') }}" class="btn btn-small">{{ "Create Account" if is_en else "Créer un compte" }}</a>
+                <a href="{{ url_for('login') }}" class="btn btn-secondary btn-small" style="margin-left:6px;">{{ "Log in" if is_en else "Se connecter" }}</a>
+            </div>
         </div>
-    </div>
-
-    <h2>Modes de jeu</h2>
-    <div class="scenario-grid">
-        {% for key, info in scenarios.items() %}
-        <div class="scenario-card">
-            <div class="icon">{{ info.icon }}</div>
-            <h3>{{ info.name }}</h3>
-            <p>{{ info.desc }}</p>
-        </div>
-        {% endfor %}
     </div>
 {% endif %}
 
-<!-- ═══════════ Résultats scientifiques ═══════════ -->
+<!-- ═══════════ Game Modes ═══════════ -->
+<h2>{{ "Simulation & Game Modes" if is_en else "Modes de simulation et de jeu" }}</h2>
+<p class="text-muted">
+    {{ "Every mode is clickable immediately. If this is your first visit, start with the Guided Tutorial!" if is_en else "Tous les modes sont accessibles en 1 clic. Pour une première visite, commencez par le Tutoriel guidé !" }}
+</p>
+
+<div class="scenario-grid">
+    {% for key, info in scenarios.items() %}
+    <a href="{{ url_for('play', scenario=key) }}" style="text-decoration:none; color:inherit;">
+        <div class="scenario-card {{ 'featured' if key == 'tutoriel' else '' }}">
+            <div class="badge">{{ info.badge }}</div>
+            <div class="icon">{{ info.icon }}</div>
+            <h3>{{ info.name }}</h3>
+            <p>{{ info.desc }}</p>
+            <span class="btn {{ 'btn-success' if key == 'tutoriel' else '' }} btn-small">
+                {{ "Start Tutorial" if (key == 'tutoriel' and is_en) else ("Lancer le tutoriel" if key == 'tutoriel' else ("Play" if is_en else "Jouer")) }}
+            </span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+<!-- ═══════════ Scientific Results (Kept in full + Plain-language takeaways) ═══════════ -->
 <section id="results" style="margin-top:40px;">
-    <h2>Résultats <span style="color:#3498db;">Scientifiques</span></h2>
-    <p class="text-muted" style="margin-bottom:20px;">Figures générées par le moteur — comparées à des données publiées ; les limites sont documentées dans le rapport.</p>
+    <h2>
+        {% if is_en %}
+            Scientific <span style="color:#3498db;">Validation &amp; Diagrams</span>
+        {% else %}
+            Résultats <span style="color:#3498db;">Scientifiques</span>
+        {% endif %}
+    </h2>
+    <p class="text-muted" style="margin-bottom:10px;">
+        {% if is_en %}
+            Figures generated directly by our Python engine and benchmarked against peer-reviewed oncology experiments (31/32 checks passed).
+        {% else %}
+            Figures générées par le moteur et comparées à des expériences publiées (31/32 vérifications réussies).
+        {% endif %}
+    </p>
+    <div class="beginner-note" style="margin-bottom:18px;">
+        {% if is_en %}
+            <strong>How to read this section without a biology background:</strong> Each card shows the real scientific plot used to verify accuracy, followed by a blue <strong>"💡 In plain words"</strong> box explaining what it means in everyday language.
+        {% else %}
+            <strong>Comment lire ces graphiques sans bagage scientifique :</strong> Chaque carte affiche le graphique issu du moteur mathématique, suivi d'un encadré bleu <strong>« 💡 En clair »</strong> qui résume l'idée simplement.
+        {% endif %}
+    </div>
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(350px, 1fr)); gap:20px;">
+        {% for fig in figures %}
         <div class="card" style="padding:0; overflow:hidden;">
-            <img src="{{ url_for('static', filename='results/fig1_croissance.png') }}" alt="Courbes de croissance" style="width:100%; display:block;">
+            <img src="{{ url_for('static', filename=fig.img) }}" alt="{{ fig.title }}" style="width:100%; display:block;">
             <div style="padding:12px;">
-                <strong>Fig. 1 — Croissance avasculaire</strong>
-                <p class="text-muted" style="margin-top:4px;">Cinétique du diamètre, populations cellulaires et microenvironnement central d'un sphéroïde EMT6/Ro.</p>
+                <strong>{{ fig.title }}</strong>
+                <p class="text-muted" style="margin-top:4px;">{{ fig.tech }}</p>
+                <div class="beginner-note">{{ fig.plain }}</div>
             </div>
         </div>
-
-        <div class="card" style="padding:0; overflow:hidden;">
-            <img src="{{ url_for('static', filename='results/fig2_profils_radiaux.png') }}" alt="Profils radiaux" style="width:100%; display:block;">
-            <div style="padding:12px;">
-                <strong>Fig. 2 — Profils radiaux</strong>
-                <p class="text-muted" style="margin-top:4px;">Distribution spatiale de l'oxygène, du glucose, du pH et de la viabilité à plusieurs instants.</p>
-            </div>
-        </div>
-
-        <div class="card" style="padding:0; overflow:hidden;">
-            <img src="{{ url_for('static', filename='results/fig3_coupe_spheroide.png') }}" alt="Coupe du sphéroïde" style="width:100%; display:block;">
-            <div style="padding:12px;">
-                <strong>Fig. 3 — Coupe du sphéroïde</strong>
-                <p class="text-muted" style="margin-top:4px;">Visualisation 2D de la structure interne : couronne viable, cœur hypoxique et nécrose centrale.</p>
-            </div>
-        </div>
-
-        <div class="card" style="padding:0; overflow:hidden;">
-            <img src="{{ url_for('static', filename='results/fig4_milieux.png') }}" alt="Effet des nutriments" style="width:100%; display:block;">
-            <div style="padding:12px;">
-                <strong>Fig. 4 — Effet des nutriments</strong>
-                <p class="text-muted" style="margin-top:4px;">Reproduction du protocole Freyer &amp; Sutherland (1986) : l'apport en O₂ et glucose contrôle la taille finale.</p>
-            </div>
-        </div>
-
-        <div class="card" style="padding:0; overflow:hidden;">
-            <img src="{{ url_for('static', filename='results/fig5_radiotherapie.png') }}" alt="Radiothérapie fractionnée" style="width:100%; display:block;">
-            <div style="padding:12px;">
-                <strong>Fig. 5 — Radiothérapie fractionnée</strong>
-                <p class="text-muted" style="margin-top:4px;">Comparaison témoin / irradié : l'hypoxie induit une radiorésistance mesurable dans le cœur tumoral.</p>
-            </div>
-        </div>
-
-        <div class="card" style="padding:0; overflow:hidden;">
-            <img src="{{ url_for('static', filename='results/fig6_modele_agents.png') }}" alt="Modèle à agents 3D" style="width:100%; display:block;">
-            <div style="padding:12px;">
-                <strong>Fig. 6 — Modèle à agents</strong>
-                <p class="text-muted" style="margin-top:4px;">Simulation cellule par cellule en 3D, validation croisée du modèle continu.</p>
-            </div>
-        </div>
-
-        <div class="card" style="padding:0; overflow:hidden;">
-            <img src="{{ url_for('static', filename='results/fig7_validation.png') }}" alt="Vérification et validation" style="width:100%; display:block;">
-            <div style="padding:12px;">
-                <strong>Fig. 7 — Validation</strong>
-                <p class="text-muted" style="margin-top:4px;">31/32 checks réussis contre les données publiées. L'écart connu sur la nécrose en milieu riche est documenté.</p>
-            </div>
-        </div>
-
-        <div class="card" style="padding:0; overflow:hidden;">
-            <img src="{{ url_for('static', filename='results/fig8_evolution.png') }}" alt="Évolution darwinienne" style="width:100%; display:block;">
-            <div style="padding:12px;">
-                <strong>Fig. 8 — Évolution darwinienne</strong>
-                <p class="text-muted" style="margin-top:4px;">Mutation, dérive et sélection — spectre allélique validé par la loi 1/f (R² ≈ 0.99).</p>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 </section>
 
-<!-- ═══════════ Équipe ═══════════ -->
+<!-- ═══════════ Team ═══════════ -->
 <section id="team" style="margin-top:50px;">
-    <h2>L'<span style="color:#3498db;">équipe</span></h2>
+    <h2>
+        {% if is_en %}
+            The <span style="color:#3498db;">Creator</span>
+        {% else %}
+            L'<span style="color:#3498db;">équipe</span>
+        {% endif %}
+    </h2>
 
     <div style="display:flex; justify-content:center; margin-top:20px;">
-        <div class="card" style="text-align:center; padding:32px 48px; max-width:360px;">
+        <div class="card" style="text-align:center; padding:32px 48px; max-width:380px;">
             <div style="width:90px; height:90px; border-radius:50%; margin:0 auto 14px; background:linear-gradient(135deg, #1a237e, #3498db); display:flex; align-items:center; justify-content:center; font-size:2.2rem; color:white;">👨‍🔬</div>
             <h3 style="margin-bottom:4px;">Harold Maugez</h3>
-            <p class="text-muted" style="color:#3498db; font-size:13px; margin-bottom:8px;">Créateur & développeur</p>
-            <p class="text-muted" style="font-size:12px;">Modélisation mathématique, moteur de simulation, solveur de transport, interface Unity et site web.</p>
+            <p class="text-muted" style="color:#3498db; font-size:13px; margin-bottom:8px;">
+                {{ "Creator & Developer" if is_en else "Créateur & développeur" }}
+            </p>
+            <p class="text-muted" style="font-size:12px;">
+                {% if is_en %}
+                    Mathematical modeling, reaction-diffusion solver, diagnostic simulation engine, Unity C# bridge and Flask web platform.
+                {% else %}
+                    Modélisation mathématique, moteur de simulation, solveur de transport, passerelle Unity et site web Flask.
+                {% endif %}
+            </p>
         </div>
     </div>
 </section>

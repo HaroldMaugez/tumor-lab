@@ -1,0 +1,295 @@
+{
+  "total": 32,
+  "passed": 31,
+  "checks": [
+    {
+      "name": "Solution analytique (profil parabolique d'O₂)",
+      "category": "vérification",
+      "value": 0.0,
+      "criterion": 0.002,
+      "passed": true,
+      "unit": "erreur relative L∞",
+      "detail": "erreurs ['5.67e-06', '1.42e-06', '3.54e-07']"
+    },
+    {
+      "name": "Ordre de convergence en maillage",
+      "category": "vérification",
+      "value": 2.163836,
+      "criterion": 1.6,
+      "passed": true,
+      "unit": "ordre",
+      "detail": "ordres observés [np.float64(2.06), np.float64(2.27)]"
+    },
+    {
+      "name": "Conservation de la masse (flux O₂ = consommation)",
+      "category": "vérification",
+      "value": 0.0,
+      "criterion": 0.0,
+      "passed": true,
+      "unit": "erreur relative",
+      "detail": ""
+    },
+    {
+      "name": "Exactitude du jacobien analytique",
+      "category": "vérification",
+      "value": 0.0,
+      "criterion": 1e-06,
+      "passed": true,
+      "unit": "erreur relative",
+      "detail": ""
+    },
+    {
+      "name": "Séparation d'échelles (τ_diffusion / τ_croissance)",
+      "category": "vérification",
+      "value": 0.000318,
+      "criterion": 0.001,
+      "passed": true,
+      "unit": "-",
+      "detail": "τ_diff=22.9 s, τ_croiss=20.0 h"
+    },
+    {
+      "name": "Positivité des concentrations",
+      "category": "vérification",
+      "value": 0.0,
+      "criterion": 0.0,
+      "passed": true,
+      "unit": "mM",
+      "detail": ""
+    },
+    {
+      "name": "Indépendance au pas de temps",
+      "category": "vérification",
+      "value": 5e-06,
+      "criterion": 0.02,
+      "passed": true,
+      "unit": "écart relatif",
+      "detail": "R(dt=1800s)=228.4, R(dt=200s)=228.4 µm"
+    },
+    {
+      "name": "Limite de diffusion de l'O₂ (vs Grimes 2014 : 233±22 µm)",
+      "category": "validation",
+      "value": 221.195101,
+      "criterion": 291.25,
+      "passed": true,
+      "unit": "µm",
+      "detail": "écart 5 %"
+    },
+    {
+      "name": "OCR volumique (vs 22-27 mmHg/s publiés)",
+      "category": "validation",
+      "value": 22.318841,
+      "criterion": 33.075,
+      "passed": true,
+      "unit": "mmHg/s",
+      "detail": ""
+    },
+    {
+      "name": "Validation croisée continu / agents (rayon)",
+      "category": "vérification",
+      "value": 0.031878,
+      "criterion": 0.15,
+      "passed": true,
+      "unit": "écart relatif",
+      "detail": "agents 190 µm, continu 184 µm à 5 j"
+    },
+    {
+      "name": "Couronne viable ~constante aux grands diamètres",
+      "category": "validation",
+      "value": 19.775391,
+      "criterion": 45.0,
+      "passed": true,
+      "unit": "µm",
+      "detail": "épaisseurs [220, 205, 200] µm"
+    },
+    {
+      "name": "OER borné entre 1 (anoxie) et 3 (normoxie)",
+      "category": "validation",
+      "value": 2.941748,
+      "criterion": 3.0,
+      "passed": true,
+      "unit": "-",
+      "detail": "OER(0 mmHg)=1.00, OER(100)=2.94"
+    },
+    {
+      "name": "Radiorésistance hypoxique (dose isoeffet anoxie/normoxie)",
+      "category": "validation",
+      "value": 2.962025,
+      "criterion": 3.0,
+      "passed": true,
+      "unit": "×",
+      "detail": "survie monotone décroissante en pO₂ : True"
+    },
+    {
+      "name": "Survie d'une lignée mutante (vs théorie de Bozic 2010)",
+      "category": "validation",
+      "value": 0.866667,
+      "criterion": 0.796813,
+      "passed": true,
+      "unit": "%",
+      "detail": "théorie 0.797 %, simulé 0.867 % sur 3000 réalisations"
+    },
+    {
+      "name": "Spectre neutre en 1/f (vs Williams et al. 2016)",
+      "category": "validation",
+      "value": 0.987467,
+      "criterion": 0.98,
+      "passed": true,
+      "unit": "R²",
+      "detail": "3 réalisations, seuil de neutralité 0.98"
+    },
+    {
+      "name": "Expansion subclonale sous sélection (contrôle positif)",
+      "category": "validation",
+      "value": 0.4669,
+      "criterion": 0.1,
+      "passed": true,
+      "unit": "fraction",
+      "detail": "le sous-clone avantagé occupe 47 % de la tumeur ; R²(1/f) = 0.990"
+    },
+    {
+      "name": "Reproductibilité à graine fixée (et divergence sinon)",
+      "category": "vérification",
+      "value": 1.0,
+      "criterion": 1.0,
+      "passed": true,
+      "unit": "-",
+      "detail": "graine 7 : (2210, 1.307986127344, 3141) == (2210, 1.307986127344, 3141) ; graine 8 : (2261, 1.318294423013, 3272)"
+    },
+    {
+      "name": "Gradient spatial de pression sélective (périphérie/coeur)",
+      "category": "validation",
+      "value": 1.607588,
+      "criterion": 1.2,
+      "passed": true,
+      "unit": "×",
+      "detail": "pO₂ coeur 112 mmHg vs périphérie 187 mmHg"
+    },
+    {
+      "name": "Croissance gompertzienne (R² de l'ajustement)",
+      "category": "validation",
+      "value": 0.99986,
+      "criterion": 0.95,
+      "passed": true,
+      "unit": "-",
+      "detail": ""
+    },
+    {
+      "name": "Identifiabilité (conditionnement de la sensibilité)",
+      "category": "verification",
+      "value": 28.70102,
+      "criterion": 100.0,
+      "passed": true,
+      "unit": "-",
+      "detail": "2 paire(s) colinéaire(s) |r|>0.95 : f_atp_maint/s50_growth r=0.997 ; sans effet : ['cell_radius']"
+    },
+    {
+      "name": "Incertitude propagée recouvrant l'expérience",
+      "category": "validation",
+      "value": 6.0,
+      "criterion": 6.0,
+      "passed": true,
+      "unit": "/6",
+      "detail": "6/6 observables compatibles (60 tirages Monte-Carlo)"
+    },
+    {
+      "name": "Fractionnement : hypofractionné plus toxique (α/β=3 Gy)",
+      "category": "validation",
+      "value": 1.472607,
+      "criterion": 1.0,
+      "passed": true,
+      "unit": "×",
+      "detail": "EQD2 conventionnel 30×2 Gy = 29.0 Gy ; agressif 12×5 Gy = 42.7 Gy (dose physique identique)"
+    },
+    {
+      "name": "Tolérance clinique d'un schéma standard (30×2 Gy)",
+      "category": "validation",
+      "value": 0.000291,
+      "criterion": 0.05,
+      "passed": true,
+      "unit": "NTCP",
+      "detail": "EQD2 tissu sain = 29.0 Gy, NTCP = 0.03 % (modèle LKB, Emami/Burman 1991)"
+    },
+    {
+      "name": "Sélection de la radiorésistance sous fractionnement",
+      "category": "validation",
+      "value": 10.011117,
+      "criterion": 2.0,
+      "passed": true,
+      "unit": "%",
+      "detail": "5×2 Gy : facteur α 1.0037 → 0.9032 (+10.0 % de résistance) ; témoin non irradié : dérive 0.00000"
+    },
+    {
+      "name": "Couronne viable [16.5 mM glc / 0.28 mM O₂]",
+      "category": "validation",
+      "value": 205.371094,
+      "criterion": 240.0,
+      "passed": true,
+      "unit": "µm",
+      "detail": "mesure 240 ± 40 µm"
+    },
+    {
+      "name": "Diamètre d'apparition de la nécrose [16.5 mM glc / 0.28 mM O₂]",
+      "category": "validation",
+      "value": 626.660156,
+      "criterion": 515.855663,
+      "passed": false,
+      "unit": "µm",
+      "detail": "mesure 516 ± 80 µm"
+    },
+    {
+      "name": "Temps de doublement initial [16.5 mM glc / 0.28 mM O₂]",
+      "category": "validation",
+      "value": 20.586789,
+      "criterion": 23.0,
+      "passed": true,
+      "unit": "h",
+      "detail": "mesure 23 ± 4 h"
+    },
+    {
+      "name": "Couronne viable [0.8 mM glc / 0.07 mM O₂]",
+      "category": "validation",
+      "value": 55.859375,
+      "criterion": 60.0,
+      "passed": true,
+      "unit": "µm",
+      "detail": "mesure 60 ± 20 µm"
+    },
+    {
+      "name": "Diamètre d'apparition de la nécrose [0.8 mM glc / 0.07 mM O₂]",
+      "category": "validation",
+      "value": 169.199219,
+      "criterion": 151.807891,
+      "passed": true,
+      "unit": "µm",
+      "detail": "mesure 152 ± 40 µm"
+    },
+    {
+      "name": "Temps de doublement initial [0.8 mM glc / 0.07 mM O₂]",
+      "category": "validation",
+      "value": 26.629721,
+      "criterion": 26.0,
+      "passed": true,
+      "unit": "h",
+      "detail": "mesure 26 ± 8 h"
+    },
+    {
+      "name": "pO₂ central (Ø 400 µm) [MK82]",
+      "category": "validation",
+      "value": 81.391266,
+      "criterion": 66.0,
+      "passed": true,
+      "unit": "mmHg",
+      "detail": "mesure 66 mmHg ± 35 %"
+    },
+    {
+      "name": "pO₂ central (Ø 1000 µm) [MK82]",
+      "category": "validation",
+      "value": 12.197651,
+      "criterion": 13.0,
+      "passed": true,
+      "unit": "mmHg",
+      "detail": "mesure 13 mmHg ± 35 %"
+    }
+  ],
+  "cached": true
+}
