@@ -29,6 +29,8 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
+from .toxicity import LKB_PARAMETERS
+
 ACTIONS: Tuple[str, ...] = (
     "wait",
     "irradiate",
@@ -50,7 +52,7 @@ FEATURE_NAMES_FR: Tuple[str, ...] = (
     "toxicité tissu sain (/ 50)",
     "alerte clinique de toxicité (/ 5)",
     "budget de dose restant",
-    "sensibilité de l'organe (sparing)",
+    "tolérance effective de l'organe (TD50 / sparing)",
     "mode tumeur vascularisée",
     "activité vasculaire observée",
     "imagerie pO₂ récente disponible",
@@ -67,7 +69,7 @@ FEATURE_NAMES_EN: Tuple[str, ...] = (
     "healthy organ toxicity (/ 50)",
     "early clinical toxicity warning",
     "remaining radiation budget",
-    "organ radiation sensitivity",
+    "effective organ tolerance (TD50 / sparing)",
     "vascular tumor regime",
     "observed vascular activity",
     "recent pO₂ oxygen scan available",
@@ -93,7 +95,10 @@ def encode_observation(obs: Dict, cfg) -> Tuple[np.ndarray, np.ndarray]:
     tox = float(obs.get("toxicity_score", 0.0))
     budget_max = max(float(getattr(cfg, "dose_budget_gy", 60.0)), 1.0)
     budget_rem = max(float(obs.get("dose_budget_remaining_gy", 0.0)), 0.0)
-    sparing = float(getattr(cfg, "sparing_factor", 0.6))
+    sparing = max(float(getattr(cfg, "sparing_factor", 0.6)), 0.2)
+    organ_name = str(getattr(cfg, "organ", "generique_tardif"))
+    organ_td50 = float(LKB_PARAMETERS.get(organ_name, LKB_PARAMETERS["generique_tardif"])[0])
+    eff_td50_norm = np.clip((organ_td50 / sparing) / 100.0, 0.1, 1.5)
     vasc_enabled = 1.0 if bool(getattr(cfg, "vascular_enabled", False)) else 0.0
     vasc_act = float(obs.get("vascular_activity", 0.0))
 
@@ -123,7 +128,7 @@ def encode_observation(obs: Dict, cfg) -> Tuple[np.ndarray, np.ndarray]:
         np.clip(tox / lose_tox, 0.0, 1.5),
         np.clip(tox / (3.0 * warn_tox), 0.0, 1.5),
         np.clip(budget_rem / budget_max, 0.0, 1.0),
-        np.clip(sparing, 0.0, 1.5),
+        eff_td50_norm,
         vasc_enabled,
         np.clip(vasc_act, 0.0, 1.0),
         has_po2,

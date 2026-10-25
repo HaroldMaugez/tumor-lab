@@ -1,8 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Inscription — Tumor Lab{% endblock %}
+{% block title %}{{ "Create Account — Tumor Lab" if is_en else "Inscription — Tumor Lab" }}{% endblock %}
 {% block content %}
 
-<h1>Inscription</h1>
+<h1>{{ "Create an Account" if is_en else "Inscription" }}</h1>
+<p class="text-muted mb">
+    {{ "Optional: saves your custom username on the Leaderboard. You can also play right away as a Guest." if is_en else "Optionnel : permet d'afficher votre pseudo au classement. Vous pouvez aussi jouer tout de suite en Invité." }}
+</p>
 
 {% if error %}
 <div class="alert alert-error">{{ error }}</div>
@@ -11,17 +14,23 @@
 <div class="card">
     <form method="POST">
         <div class="form-group">
-            <label>Nom d'utilisateur</label>
-            <input type="text" name="username" required minlength="2" placeholder="Votre pseudo">
+            <label>{{ "Username" if is_en else "Nom d'utilisateur" }}</label>
+            <input type="text" name="username" required minlength="2" placeholder="{{ '2+ characters' if is_en else '2 caractères minimum' }}">
         </div>
         <div class="form-group">
-            <label>Mot de passe</label>
-            <input type="password" name="password" required minlength="4" placeholder="4 caractères minimum">
+            <label>{{ "Password" if is_en else "Mot de passe" }}</label>
+            <input type="password" name="password" required minlength="4" placeholder="{{ '4+ characters' if is_en else '4 caractères minimum' }}">
         </div>
-        <button type="submit" class="btn btn-success">Créer mon compte</button>
+        <button type="submit" class="btn btn-success">{{ "Create My Account" if is_en else "Créer mon compte" }}</button>
+        <a href="{{ url_for('guest_start', scenario='tutoriel', lang=lang) }}" class="btn btn-secondary" style="margin-left:8px;">
+            {{ "Skip & Play as Guest" if is_en else "Jouer sans compte (Invité)" }}
+        </a>
     </form>
 </div>
 
-<p class="text-muted mt">Déjà un compte ? <a href="{{ url_for('login') }}">Se connecter</a></p>
+<p class="text-muted mt">
+    {{ "Already have an account?" if is_en else "Déjà un compte ?" }}
+    <a href="{{ url_for('login', lang=lang) }}">{{ "Log in" if is_en else "Se connecter" }}</a>
+</p>
 
 {% endblock %}

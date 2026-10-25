@@ -19,13 +19,13 @@
     {% endif %}
 </div>
 
-<!-- ═══════════ Beginner Onboarding Box (Zero Biology Required) ═══════════ -->
+<!-- Beginner Onboarding Box -->
 <div class="tutorial-box">
     <h2 style="margin-bottom:8px; color:#1e8449;">
         {% if is_en %}
-            👋 New to biology or oncology? Start here in 1 click!
+            New to biology or oncology? Start here in 1 click
         {% else %}
-            👋 Aucune connaissance en biologie ou en cancérologie ? Commencez ici !
+            Aucune connaissance en biologie ou en cancérologie ? Commencez ici
         {% endif %}
     </h2>
     <p style="font-size:14px; margin-bottom:10px;">
@@ -38,42 +38,42 @@
     <ul style="padding-left:20px; font-size:13px; margin-bottom:14px;">
         {% if is_en %}
             <li><strong>1. Detect &amp; Monitor:</strong> Real medical scans have slight noise — you see estimated size and blood markers, never exact cell counts.</li>
-            <li><strong>2. Diagnose Hidden Risks:</strong> Run an <strong>Oxygen Scan (pO₂)</strong> to spot suffocating central cells (<em>hypoxia</em>) and a <strong>Biopsy</strong> to detect resistant cells before treating blindly.</li>
-            <li><strong>3. Treat Safely:</strong> Shrink or keep the tumor below <strong>400 µm</strong> using gentle radiation doses without hurting the healthy organ around it!</li>
+            <li><strong>2. Diagnose Hidden Risks:</strong> Run an <strong>Oxygen Scan (pO2)</strong> to spot suffocating central cells (<em>hypoxia</em>) and a <strong>Biopsy</strong> to detect resistant cells before treating blindly.</li>
+            <li><strong>3. Treat Safely:</strong> Shrink or keep the tumor below <strong>400 µm</strong> using gentle radiation doses without hurting the healthy organ around it.</li>
         {% else %}
             <li><strong>1. Détecter et suivre :</strong> Comme à l'hôpital, les scanners ont une marge d'incertitude — vous voyez une taille estimée et un marqueur sanguin, jamais chaque cellule.</li>
-            <li><strong>2. Diagnostiquer l'invisible :</strong> Lancez une <strong>Imagerie d'oxygène (pO₂)</strong> pour repérer le manque d'air au centre (<em>hypoxie</em>) et une <strong>Biopsie</strong> pour détecter les cellules résistantes.</li>
-            <li><strong>3. Traiter sans nuire :</strong> Réduisez la tumeur sous <strong>400 µm</strong> avec de petites doses de rayons sans abîmer l'organe sain voisin !</li>
+            <li><strong>2. Diagnostiquer l'invisible :</strong> Lancez une <strong>Imagerie d'oxygène (pO2)</strong> pour repérer le manque d'air au centre (<em>hypoxie</em>) et une <strong>Biopsie</strong> pour détecter les cellules résistantes.</li>
+            <li><strong>3. Traiter sans nuire :</strong> Réduisez la tumeur sous <strong>400 µm</strong> avec de petites doses de rayons sans abîmer l'organe sain voisin.</li>
         {% endif %}
     </ul>
     <div>
-        <a href="{{ url_for('play', scenario='tutoriel') }}" class="btn btn-success">
-            {{ "🎓 Start Guided Tutorial (No Account Needed)" if is_en else "🎓 Lancer le Tutoriel Guidé (Sans inscription)" }}
+        <a href="{{ url_for('play', scenario='tutoriel', lang=lang) }}" class="btn btn-success">
+            {{ "Start Guided Tutorial (No Account Needed)" if is_en else "Lancer le Tutoriel Guidé (Sans inscription)" }}
         </a>
-        <a href="{{ url_for('learn') }}" class="btn" style="margin-left:8px; margin-top:4px;">
-            {{ "📘 Learn the Basics in 3 Min (+ Mini-Quiz)" if is_en else "📘 Comprendre en 3 min (+ Mini-Quiz)" }}
+        <a href="{{ url_for('learn', lang=lang) }}" class="btn" style="margin-left:8px; margin-top:4px;">
+            {{ "Learn the Basics in 3 Min (+ Quiz)" if is_en else "Comprendre en 3 min (+ Quiz)" }}
         </a>
     </div>
 </div>
 
-<!-- ═══════════ Account / Guest Info ═══════════ -->
+<!-- Account / Guest Info -->
 {% if user %}
     <div class="card" style="padding:14px 20px;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
             <div>
                 <strong>
-                    {% if is_en %}Welcome, {{ user.username }}!{% else %}Bonjour {{ user.username }} !{% endif %}
+                    {% if is_en %}Welcome, {{ user.username }}{% else %}Bonjour {{ user.username }}{% endif %}
                 </strong>
                 <span class="text-muted" style="margin-left:8px;">
                     {% if is_guest %}
-                        {{ "(Guest mode — create an account anytime to keep a custom name on the leaderboard)" if is_en else "(Mode invité — créez un compte si vous voulez garder votre pseudo au classement)" }}
+                        {{ "(Guest mode — create an account anytime to save a custom name on the leaderboard)" if is_en else "(Mode invité — créez un compte si vous voulez enregistrer un pseudo au classement)" }}
                     {% else %}
                         {{ "Pick any scenario below to start." if is_en else "Choisissez un mode ci-dessous pour jouer." }}
                     {% endif %}
                 </span>
             </div>
-            <a href="{{ url_for('leaderboard') }}" class="btn btn-secondary btn-small">
-                {{ "🏆 Leaderboard" if is_en else "🏆 Classement" }}
+            <a href="{{ url_for('leaderboard', lang=lang) }}" class="btn btn-secondary btn-small">
+                {{ "View Leaderboard" if is_en else "Voir le classement" }}
             </a>
         </div>
     </div>
@@ -87,27 +87,26 @@
                 </span>
             </div>
             <div>
-                <a href="{{ url_for('register') }}" class="btn btn-small">{{ "Create Account" if is_en else "Créer un compte" }}</a>
-                <a href="{{ url_for('login') }}" class="btn btn-secondary btn-small" style="margin-left:6px;">{{ "Log in" if is_en else "Se connecter" }}</a>
+                <a href="{{ url_for('register', lang=lang) }}" class="btn btn-small">{{ "Create Account" if is_en else "Créer un compte" }}</a>
+                <a href="{{ url_for('login', lang=lang) }}" class="btn btn-secondary btn-small" style="margin-left:6px;">{{ "Log in" if is_en else "Se connecter" }}</a>
             </div>
         </div>
     </div>
 {% endif %}
 
-<!-- ═══════════ Game Modes ═══════════ -->
+<!-- Game Modes -->
 <h2>{{ "Simulation & Game Modes" if is_en else "Modes de simulation et de jeu" }}</h2>
 <p class="text-muted">
-    {{ "Every mode is clickable immediately. If this is your first visit, start with the Guided Tutorial!" if is_en else "Tous les modes sont accessibles en 1 clic. Pour une première visite, commencez par le Tutoriel guidé !" }}
+    {{ "Every mode is clickable immediately. If this is your first visit, start with the Guided Tutorial." if is_en else "Tous les modes sont accessibles en 1 clic. Pour une première visite, commencez par le Tutoriel guidé." }}
 </p>
 
 <div class="scenario-grid">
     {% for key, info in scenarios.items() %}
-    <a href="{{ url_for('play', scenario=key) }}" style="text-decoration:none; color:inherit;">
+    <a href="{{ url_for('play', scenario=key, lang=lang) }}" style="text-decoration:none; color:inherit;">
         <div class="scenario-card {{ 'featured' if key == 'tutoriel' else '' }}">
             <div class="badge">{{ info.badge }}</div>
-            <div class="icon">{{ info.icon }}</div>
             <h3>{{ info.name }}</h3>
-            <p>{{ info.desc }}</p>
+            <p style="margin-top:6px;">{{ info.desc }}</p>
             <span class="btn {{ 'btn-success' if key == 'tutoriel' else '' }} btn-small">
                 {{ "Start Tutorial" if (key == 'tutoriel' and is_en) else ("Lancer le tutoriel" if key == 'tutoriel' else ("Play" if is_en else "Jouer")) }}
             </span>
@@ -116,7 +115,7 @@
     {% endfor %}
 </div>
 
-<!-- ═══════════ Scientific Results (Kept in full + Plain-language takeaways) ═══════════ -->
+<!-- Scientific Results -->
 <section id="results" style="margin-top:40px;">
     <h2>
         {% if is_en %}
@@ -134,9 +133,9 @@
     </p>
     <div class="beginner-note" style="margin-bottom:18px;">
         {% if is_en %}
-            <strong>How to read this section without a biology background:</strong> Each card shows the real scientific plot used to verify accuracy, followed by a blue <strong>"💡 In plain words"</strong> box explaining what it means in everyday language.
+            <strong>How to read this section without a biology background:</strong> Each card shows the scientific plot used to verify accuracy, followed by a blue <strong>"In plain words"</strong> box explaining what it means in everyday language.
         {% else %}
-            <strong>Comment lire ces graphiques sans bagage scientifique :</strong> Chaque carte affiche le graphique issu du moteur mathématique, suivi d'un encadré bleu <strong>« 💡 En clair »</strong> qui résume l'idée simplement.
+            <strong>Comment lire ces graphiques sans bagage scientifique :</strong> Chaque carte affiche le graphique issu du moteur mathématique, suivi d'un encadré bleu <strong>« En clair »</strong> qui résume l'idée simplement.
         {% endif %}
     </div>
 
@@ -154,7 +153,7 @@
     </div>
 </section>
 
-<!-- ═══════════ Team ═══════════ -->
+<!-- Team -->
 <section id="team" style="margin-top:50px;">
     <h2>
         {% if is_en %}
@@ -166,16 +165,16 @@
 
     <div style="display:flex; justify-content:center; margin-top:20px;">
         <div class="card" style="text-align:center; padding:32px 48px; max-width:380px;">
-            <div style="width:90px; height:90px; border-radius:50%; margin:0 auto 14px; background:linear-gradient(135deg, #1a237e, #3498db); display:flex; align-items:center; justify-content:center; font-size:2.2rem; color:white;">👨‍🔬</div>
+            <div style="width:80px; height:80px; border-radius:50%; margin:0 auto 14px; background:#2c3e50; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:bold; color:white;">HM</div>
             <h3 style="margin-bottom:4px;">Harold Maugez</h3>
             <p class="text-muted" style="color:#3498db; font-size:13px; margin-bottom:8px;">
                 {{ "Creator & Developer" if is_en else "Créateur & développeur" }}
             </p>
             <p class="text-muted" style="font-size:12px;">
                 {% if is_en %}
-                    Mathematical modeling, reaction-diffusion solver, diagnostic simulation engine, Unity C# bridge and Flask web platform.
+                    Mathematical modeling, reaction-diffusion solver, diagnostic simulation engine, Actor-Critic neural network, Unity C# bridge and Flask web platform.
                 {% else %}
-                    Modélisation mathématique, moteur de simulation, solveur de transport, passerelle Unity et site web Flask.
+                    Modélisation mathématique, moteur de simulation, solveur de transport, réseau de neurones Actor-Critic, passerelle Unity et site web Flask.
                 {% endif %}
             </p>
         </div>

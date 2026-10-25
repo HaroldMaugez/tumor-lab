@@ -8,46 +8,59 @@
 </head>
 <body>
 <nav>
-    <a href="{{ url_for('home') }}" class="brand">🔬 Tumor Lab</a>
+    <a href="{{ url_for('home', lang=lang) }}" class="brand">Tumor Lab</a>
     <div>
-        <a href="{{ url_for('home') }}">{{ "Home" if is_en else "Accueil" }}</a>
-        <a href="{{ url_for('play', scenario='tutoriel') }}"><strong>{{ "🎓 Tutorial" if is_en else "🎓 Tutoriel" }}</strong></a>
-        <a href="{{ url_for('learn') }}">{{ "How It Works" if is_en else "Comprendre" }}</a>
-        <a href="{{ url_for('leaderboard') }}">{{ "Leaderboard" if is_en else "Classement" }}</a>
-        <a href="{{ url_for('tests_page') }}">{{ "Validation (31/32)" if is_en else "Tests (31/32)" }}</a>
-        <a href="{{ url_for('references') }}">{{ "References" if is_en else "Références" }}</a>
+        <a href="{{ url_for('home', lang=lang) }}">{{ "Home" if is_en else "Accueil" }}</a>
+        <a href="{{ url_for('play', scenario='tutoriel', lang=lang) }}"><strong>{{ "Tutorial" if is_en else "Tutoriel" }}</strong></a>
+        <a href="{{ url_for('learn', lang=lang) }}">{{ "How It Works" if is_en else "Comprendre" }}</a>
+        <a href="{{ url_for('leaderboard', lang=lang) }}">{{ "Leaderboard" if is_en else "Classement" }}</a>
+        <a href="{{ url_for('tests_page', lang=lang) }}">{{ "Validation (31/32)" if is_en else "Tests (31/32)" }}</a>
+        <a href="{{ url_for('references', lang=lang) }}">{{ "References" if is_en else "Références" }}</a>
         {% if user %}
-            <span style="margin-left:14px; font-size:13px; opacity:0.85;">👤 {{ user.username }}</span>
+            <span style="margin-left:14px; font-size:13px; opacity:0.85;">{{ user.username }}</span>
             {% if is_guest %}
-                <a href="{{ url_for('register') }}">{{ "Save Account" if is_en else "Créer un compte" }}</a>
+                <a href="{{ url_for('register', lang=lang) }}">{{ "Save Account" if is_en else "Créer un compte" }}</a>
             {% endif %}
-            <a href="{{ url_for('logout') }}">{{ "Exit" if is_en else "Quitter" }}</a>
+            <a href="{{ url_for('logout', lang=lang) }}">{{ "Exit" if is_en else "Quitter" }}</a>
         {% else %}
-            <a href="{{ url_for('login') }}">{{ "Log in" if is_en else "Connexion" }}</a>
-            <a href="{{ url_for('register') }}">{{ "Sign up" if is_en else "Inscription" }}</a>
+            <a href="{{ url_for('login', lang=lang) }}">{{ "Log in" if is_en else "Connexion" }}</a>
+            <a href="{{ url_for('register', lang=lang) }}">{{ "Sign up" if is_en else "Inscription" }}</a>
         {% endif %}
         {% if is_en %}
-            <a class="dark-toggle" href="{{ url_for('set_lang', lang_code='fr') }}" title="Passer le site en français">🇫🇷 FR</a>
+            <a class="dark-toggle" href="{{ url_for('set_lang', lang_code='fr') }}" title="Passer le site en français">FR</a>
         {% else %}
-            <a class="dark-toggle" href="{{ url_for('set_lang', lang_code='en') }}" title="Switch site to English">🇬🇧 EN</a>
+            <a class="dark-toggle" href="{{ url_for('set_lang', lang_code='en') }}" title="Switch site to English">EN</a>
         {% endif %}
-        <button class="dark-toggle" onclick="toggleDark()" id="dark-btn" title="Dark / Light mode">🌙</button>
+        <button class="dark-toggle" onclick="toggleDark()" id="dark-btn">{{ "Dark" if is_en else "Sombre" }}</button>
     </div>
 </nav>
 <div class="container">
     {% block content %}{% endblock %}
 </div>
 <script>
+const PAGE_IS_EN = {{ "true" if is_en else "false" }};
+function updateDarkBtn() {
+    const isDark = document.body.classList.contains('dark');
+    const btn = document.getElementById('dark-btn');
+    if (!btn) return;
+    if (PAGE_IS_EN) {
+        btn.textContent = isDark ? 'Light' : 'Dark';
+    } else {
+        btn.textContent = isDark ? 'Clair' : 'Sombre';
+    }
+}
 function toggleDark() {
     document.body.classList.toggle('dark');
     const isDark = document.body.classList.contains('dark');
-    localStorage.setItem('dark', isDark ? '1' : '0');
-    document.getElementById('dark-btn').textContent = isDark ? '☀️' : '🌙';
+    try { localStorage.setItem('dark', isDark ? '1' : '0'); } catch (_) {}
+    updateDarkBtn();
 }
-if (localStorage.getItem('dark') === '1') {
-    document.body.classList.add('dark');
-    document.getElementById('dark-btn').textContent = '☀️';
-}
+try {
+    if (localStorage.getItem('dark') === '1') {
+        document.body.classList.add('dark');
+    }
+} catch (_) {}
+updateDarkBtn();
 </script>
 </body>
 </html>

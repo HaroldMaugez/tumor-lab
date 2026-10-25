@@ -1,50 +1,260 @@
 {% extends "base.html" %}
-{% block title %}Comprendre le modèle — Tumor Lab{% endblock %}
+{% block title %}{{ "How It Works — Tumor Lab" if is_en else "Comprendre — Tumor Lab" }}{% endblock %}
 {% block content %}
-<h1>Comprendre Tumor Lab</h1>
-<p class="text-muted">Une présentation simple des mécanismes simulés et de leurs limites.</p>
 
-<div class="alert alert-info">
-    Tumor Lab est un outil pédagogique et expérimental. Il ne constitue pas un dispositif médical et ne doit pas servir à choisir un traitement réel.
+<h1>{{ "Understand Tumor Lab in 3 Minutes" if is_en else "Comprendre Tumor Lab en 3 minutes" }}</h1>
+<p class="text-muted">
+    {% if is_en %}
+        Zero biology or oncology background needed. Here is everything you need to play and understand the science behind the simulator.
+    {% else %}
+        Aucun prérequis en biologie nécessaire. Voici tout ce qu'il faut savoir pour jouer et comprendre les mécanismes simulés.
+    {% endif %}
+</p>
+
+<div class="alert alert-info mt">
+    {% if is_en %}
+        Tumor Lab is an educational and theoretical simulator, not a medical device. Never use it for real medical decisions.
+    {% else %}
+        Tumor Lab est un outil pédagogique et théorique, pas un dispositif médical. Il ne doit jamais servir à orienter un vrai traitement.
+    {% endif %}
 </div>
 
+<!-- 3 Everyday Analogies -->
+<div class="scenario-grid" style="margin-bottom:15px;">
+    <div class="card" style="margin-bottom:0;">
+        <h2>{{ "1. Layers Inside a Tumor" if is_en else "1. Les couches d'une tumeur" }}</h2>
+        <p style="margin-top:6px;">
+            {% if is_en %}
+                Cells on the <strong>green outer layer</strong> get plenty of oxygen and sugar, so they divide fast. Cells in the <strong>yellow middle layer</strong> suffocate from low oxygen (<em>hypoxia</em>). In large tumors, the very center starves completely (<em>necrosis</em>).
+            {% else %}
+                Les cellules du <strong>bord vert</strong> reçoivent tout l'oxygène et se divisent vite. Celles du <strong>milieu jaune</strong> manquent d'air (<em>hypoxie</em>). Si la tumeur est très grosse, le cœur finit par mourir d'asphyxie (<em>nécrose</em>).
+            {% endif %}
+        </p>
+    </div>
+
+    <div class="card" style="margin-bottom:0;">
+        <h2>{{ "2. Why Scans & Biopsies Matter" if is_en else "2. Pourquoi faire des examens ?" }}</h2>
+        <p style="margin-top:6px;">
+            {% if is_en %}
+                Doctors never see exact cell counts. Basic scans have <strong>±5% blur</strong>. Running an <strong>Oxygen Scan (pO2)</strong> reveals whether central cells lack oxygen (making them 3x harder to kill), and a <strong>Biopsy</strong> checks if resistant cells are taking over.
+            {% else %}
+                Un médecin ne voit jamais chaque cellule. Le scanner simple a <strong>±5% de flou</strong>. L'<strong>Imagerie pO2</strong> révèle si le cœur manque d'oxygène (il résiste alors 3x mieux aux rayons) et la <strong>Biopsie</strong> estime le % de cellules résistantes.
+            {% endif %}
+        </p>
+    </div>
+
+    <div class="card" style="margin-bottom:0;">
+        <h2>{{ "3. Gentle Doses vs. Big Blasts" if is_en else "3. Petites doses vs gros choc" }}</h2>
+        <p style="margin-top:6px;">
+            {% if is_en %}
+                Why don't hospitals deliver 50 Gy in one day? Because <strong>healthy organs</strong> repair small daily doses (~2 Gy) much better than big blasts, and spacing sessions lets oxygen reach deeper into the shrinking tumor.
+            {% else %}
+                Pourquoi ne pas envoyer une dose énorme d'un seul coup ? Parce que <strong>l'organe sain</strong> répare bien les petites séances (~2 Gy) mais s'abîme vite sous de grosses doses, et espacer les séances réoxygène la tumeur.
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<!-- Interactive Mini-Sandbox -->
 <div class="card">
-    <h2>Le principe du jeu</h2>
-    <p>Chaque tour représente une évolution de la tumeur. Vous observez des mesures imparfaites, choisissez une action, puis le moteur calcule la croissance, la réponse au traitement et l'état du patient.</p>
-    <p style="margin-top:10px;">L'objectif n'est pas seulement de réduire la tumeur : il faut aussi préserver les tissus sains et éviter de sélectionner des cellules résistantes.</p>
+    <h2>{{ "Interactive Sandbox: Test Radiation vs. Oxygen" if is_en else "Mini-laboratoire interactif : Testez Rayons & Oxygène" }}</h2>
+    <p style="margin-bottom:12px;">
+        {% if is_en %}
+            Move the two sliders below to see how our real radiobiology equations (Linear-Quadratic + Oxygen Enhancement Ratio) react:
+        {% else %}
+            Bougez les deux curseurs ci-dessous pour voir comment réagissent les vraies équations du moteur (modèle Linéaire-Quadratique + effet Oxygène) :
+        {% endif %}
+    </p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:15px; margin-bottom:12px;">
+        <div>
+            <label style="font-size:13px;">
+                {{ "Single Radiation Session:" if is_en else "Dose d'une séance :" }}
+                <strong id="sb-dose-lbl">2.0</strong> Gy
+            </label>
+            <input type="range" id="sb-dose" min="0.5" max="5.0" step="0.1" value="2.0" oninput="updateSandbox()" style="width:100%; margin-top:4px;">
+        </div>
+        <div>
+            <label style="font-size:13px;">
+                {{ "Tumor Oxygen Level (pO2):" if is_en else "Oxygène dans la tumeur (pO2) :" }}
+                <strong id="sb-o2-lbl">25</strong> mmHg
+            </label>
+            <input type="range" id="sb-o2" min="0" max="60" step="1" value="25" oninput="updateSandbox()" style="width:100%; margin-top:4px;">
+        </div>
+    </div>
+
+    <div class="stat">
+        <label>{{ "Cancer Cells Killed in 1 Session" if is_en else "Cellules tumorales détruites en 1 séance" }} : <strong id="sb-kill">—</strong></label>
+        <div class="bar"><div class="bar-fill blue" id="sb-kill-bar" style="width:50%"></div></div>
+    </div>
+    <div class="stat">
+        <label>{{ "Relative Stress on Healthy Organ (EQD2)" if is_en else "Impact relatif sur l'organe sain (EQD2)" }} : <strong id="sb-tox">—</strong></label>
+        <div class="bar"><div class="bar-fill green" id="sb-tox-bar" style="width:20%"></div></div>
+    </div>
+    <div class="beginner-note" id="sb-explain"></div>
 </div>
 
-<div class="scenario-grid">
-    <div class="card">
-        <h2>Hypoxie</h2>
-        <p>Une tumeur qui grossit peut présenter un manque d'oxygène au centre. L'hypoxie réduit l'efficacité des radiations et crée un environnement différent pour les cellules.</p>
-    </div>
-    <div class="card">
-        <h2>Résistance</h2>
-        <p>Les cellules n'ont pas toutes la même radiosensibilité. Une dose peut éliminer les cellules sensibles tout en laissant davantage de place aux clones résistants.</p>
-    </div>
-    <div class="card">
-        <h2>Toxicité</h2>
-        <p>Chaque fraction de radiation contribue à la dose reçue par l'organe sain. Le modèle utilise une estimation de la probabilité de complication pour représenter ce compromis.</p>
-    </div>
-    <div class="card">
-        <h2>Vascularisation</h2>
-        <p>Dans le scénario humain fictif, le réseau vasculaire modifie l'apport d'oxygène et la dynamique tumorale. L'action anti-angiogénique est une mécanique de scénario.</p>
-    </div>
-</div>
-
+<!-- Plain-Language Glossary -->
 <div class="card">
-    <h2>Pourquoi les examens sont utiles ?</h2>
-    <ul style="padding-left:22px;">
-        <li><strong>Biopsie :</strong> donne une estimation bruitée de la résistance.</li>
-        <li><strong>Imagerie pO₂ :</strong> révèle la distribution de l'oxygène.</li>
-        <li><strong>Observation :</strong> le diamètre et les marqueurs comportent volontairement du bruit.</li>
-    </ul>
+    <h2>{{ "Plain-Language Glossary" if is_en else "Petit lexique sans jargon" }}</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>{{ "Term in the App" if is_en else "Terme dans le jeu" }}</th>
+                <th>{{ "What It Means in Everyday Words" if is_en else "Explication simple" }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if is_en %}
+            <tr><td><strong>µm (Micrometer)</strong></td><td>One thousandth of a millimeter (1000 µm = 1 mm). Your goal is to shrink the tumor below <strong>400 µm</strong> (0.4 mm).</td></tr>
+            <tr><td><strong>Gy (Gray)</strong></td><td>Unit of radiation dose absorbed by tissue. Hospital sessions usually deliver about <strong>1.8 to 2.0 Gy</strong> per day.</td></tr>
+            <tr><td><strong>Hypoxia / pO2 Scan</strong></td><td>Lack of oxygen inside the tumor (measured in mmHg). Below 10 mmHg, cancer cells resist radiation up to 3x better.</td></tr>
+            <tr><td><strong>Needle Biopsy</strong></td><td>Sampling 60 cells to check what % of surviving cancer cells have become tougher against radiation.</td></tr>
+            <tr><td><strong>Blood Biomarker</strong></td><td>A noisy blood test (±20%, similar to PSA) that reflects whether the hidden cell population is rising or falling.</td></tr>
+            <tr><td><strong>Toxicity (NTCP)</strong></td><td>Cumulative radiation damage to the surrounding healthy organ. Safe below 5; lethal game over at <strong>50</strong>.</td></tr>
+            <tr><td><strong>Anti-angiogenic</strong></td><td>In the Vascular mode, calms abnormal blood vessels that feed a growing tumor.</td></tr>
+            <tr><td><strong>PolicyValueNet (AI)</strong></td><td>A real 3-layer Actor-Critic neural network (5,575 parameters) trained with Adam and Reinforcement Learning on public scans only.</td></tr>
+            {% else %}
+            <tr><td><strong>µm (Micromètre)</strong></td><td>Un millième de millimètre (1000 µm = 1 mm). Votre objectif est de descendre sous <strong>400 µm</strong> (0,4 mm).</td></tr>
+            <tr><td><strong>Gy (Gray)</strong></td><td>Unité de dose des rayons. À l'hôpital, une séance classique délivre environ <strong>1,8 à 2,0 Gy</strong> par jour.</td></tr>
+            <tr><td><strong>Hypoxie / Imagerie pO2</strong></td><td>Manque d'oxygène au cœur de la tumeur (en mmHg). Sous 10 mmHg, les cellules résistent jusqu'à 3x mieux aux rayons.</td></tr>
+            <tr><td><strong>Biopsie</strong></td><td>Prélèvement de 60 cellules pour estimer quel % de cellules est devenu résistant aux rayons.</td></tr>
+            <tr><td><strong>Marqueur sanguin</strong></td><td>Prise de sang bruitée (±20%, type PSA) qui suit la hausse ou la baisse globale des cellules.</td></tr>
+            <tr><td><strong>Toxicité (NTCP)</strong></td><td>Dégâts cumulés sur l'organe sain voisin. Sûr sous 5 ; défaite critique à <strong>50</strong>.</td></tr>
+            <tr><td><strong>Anti-angiogénique</strong></td><td>Dans le mode Vascularisé, freine les vaisseaux sanguins anormaux créés par la tumeur.</td></tr>
+            <tr><td><strong>PolicyValueNet (IA)</strong></td><td>Vrai réseau de neurones Actor-Critic à 3 couches (5 575 paramètres) entraîné avec Adam et RL sur les examens publics.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
 </div>
 
+<!-- Quick 3-Question Beginner Quiz -->
 <div class="card">
-    <h2>Limites scientifiques</h2>
-    <p>Le moteur combine des modèles continus, des paramètres issus de la littérature et des fermetures propres aux scénarios. Il simplifie fortement l'immunité, la pharmacologie, l'anatomie, la perfusion et la variabilité entre patients. Les modes vascularisés sont explicitement fictifs et ne sont pas des prédictions cliniques.</p>
-    <p style="margin-top:10px;">Les références et les détails techniques sont disponibles dans la page <a href="{{ url_for('references') }}">Références</a>.</p>
+    <h2>{{ "Quick 30-Second Check" if is_en else "Mini-Quiz en 30 secondes" }}</h2>
+    <div id="quiz-container"></div>
+    <div class="mt">
+        <a href="{{ url_for('play', scenario='tutoriel', lang=lang) }}" class="btn btn-success">
+            {{ "Play the Guided Tutorial Now" if is_en else "Lancer le Tutoriel Guidé maintenant" }}
+        </a>
+    </div>
 </div>
+
+<script>
+const IS_EN = {{ "true" if is_en else "false" }};
+
+function updateSandbox() {
+    const d = parseFloat(document.getElementById("sb-dose").value);
+    const po2 = parseFloat(document.getElementById("sb-o2").value);
+    document.getElementById("sb-dose-lbl").textContent = d.toFixed(1);
+    document.getElementById("sb-o2-lbl").textContent = po2.toFixed(0);
+
+    const oer = (3.0 * po2 + 3.0) / (po2 + 3.0);
+    const dEff = d * (oer / 3.0);
+    const sf = Math.exp(-0.3 * dEff - 0.03 * dEff * dEff);
+    const killPct = (1.0 - sf) * 100.0;
+
+    const dHealthy = d * 0.8;
+    const eqd2 = (dHealthy * (1.0 + dHealthy / 3.0)) / (1.0 + 2.0 / 3.0);
+    const stressPct = Math.min(100, (eqd2 / 8.0) * 100);
+
+    document.getElementById("sb-kill").textContent = killPct.toFixed(1) + "%";
+    document.getElementById("sb-kill-bar").style.width = killPct.toFixed(1) + "%";
+
+    document.getElementById("sb-tox").textContent = eqd2.toFixed(2) + " Gy EQD2";
+    const tBar = document.getElementById("sb-tox-bar");
+    tBar.style.width = stressPct.toFixed(1) + "%";
+    tBar.className = "bar-fill " + (stressPct > 60 ? "red" : stressPct > 30 ? "orange" : "green");
+
+    const exp = document.getElementById("sb-explain");
+    if (po2 < 8) {
+        exp.innerHTML = IS_EN
+            ? "<strong>Low Oxygen (Hypoxia):</strong> Notice how fewer cancer cells die even at the same radiation dose, while healthy organ damage stays just as high. That is why running an <strong>Oxygen Scan (pO2)</strong> matters."
+            : "<strong>Manque d'oxygène (Hypoxie) :</strong> Beaucoup moins de cellules tumorales meurent pour la même dose, alors que l'organe sain subit autant de dégâts. D'où l'utilité de l'<strong>Imagerie pO2</strong>.";
+    } else if (d >= 3.8) {
+        exp.innerHTML = IS_EN
+            ? "<strong>High Dose Warning:</strong> Healthy tissue damage grows faster than linearly (quadratic EQD2). Repeating 4–5 Gy on a fragile lung quickly becomes lethal."
+            : "<strong>Dose élevée :</strong> Les dégâts sur l'organe sain grimpent de façon quadratique (EQD2). Répéter 4–5 Gy sur un poumon fragile devient vite léthal.";
+    } else {
+        exp.innerHTML = IS_EN
+            ? "<strong>Balanced Window:</strong> Good oxygen plus a moderate ~2 Gy dose kills over half of dividing tumor cells while keeping healthy organ stress low."
+            : "<strong>Équilibre optimal :</strong> Avec un bon oxygène et ~2 Gy, plus de la moitié des cellules actives sont détruites tout en ménageant l'organe sain.";
+    }
+}
+
+const QUIZ = IS_EN ? [
+    {
+        q: "1. What happens when the center of a tumor runs out of oxygen (hypoxia)?",
+        opts: ["Radiation kills it 3x easier", "It becomes up to 3x more resistant to radiation", "It turns into healthy tissue"],
+        ans: 1,
+        why: "Correct. Oxygen helps lock in DNA damage from radiation. Without oxygen, central cells survive much better."
+    },
+    {
+        q: "2. Why shouldn't you always drag the radiation slider to maximum (5.0 Gy) every day?",
+        opts: ["Healthy organs suffer quadratic toxicity (lethal at 50) and resistant clones get selected", "Radiation costs points directly", "5.0 Gy makes the tumor grow faster"],
+        ans: 0,
+        why: "Exactly. Fragile organs like the lung hit lethal toxicity fast under big fractions, while gentle ~2 Gy sessions spare healthy tissue."
+    },
+    {
+        q: "3. What does a Needle Biopsy tell you during the game?",
+        opts: ["The patient's age", "An estimate of what % of tumor cells resist radiation", "The exact total number of cells with zero noise"],
+        ans: 1,
+        why: "Right. A biopsy samples 60 cells to estimate clonal resistance (%) so you are not treating blindly."
+    }
+] : [
+    {
+        q: "1. Que se passe-t-il quand le centre de la tumeur manque d'oxygène (hypoxie) ?",
+        opts: ["Les rayons le détruisent 3x plus facilement", "Il devient jusqu'à 3x plus résistant aux rayons", "Il redevient un tissu sain"],
+        ans: 1,
+        why: "Exact. L'oxygène fixe les dégâts des rayons sur l'ADN : sans oxygène, les cellules du centre survivent beaucoup mieux."
+    },
+    {
+        q: "2. Pourquoi ne faut-il pas envoyer la dose maximale (5,0 Gy) tous les jours ?",
+        opts: ["L'organe sain subit une toxicité rapide (mortelle à 50) et cela sélectionne la résistance", "Les rayons enlèvent directement des points", "5 Gy fait grossir la tumeur"],
+        ans: 0,
+        why: "Exact. Sur un organe sensible comme le poumon, les grosses fractions provoquent une toxicité fatale, alors que ~2 Gy épargne le tissu sain."
+    },
+    {
+        q: "3. À quoi sert l'examen de Biopsie pendant une partie ?",
+        opts: ["À connaître l'âge du patient", "À estimer le % de cellules devenues résistantes aux rayons", "À voir le nombre exact de cellules sans aucun bruit"],
+        ans: 1,
+        why: "Exactement. La biopsie prélève 60 cellules pour estimer la résistance et éviter de traiter à l'aveugle."
+    }
+];
+
+function renderQuiz() {
+    const el = document.getElementById("quiz-container");
+    el.innerHTML = QUIZ.map((item, qi) => `
+        <div style="margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid #eee;">
+            <strong style="font-size:14px;">${item.q}</strong>
+            <div style="margin-top:6px;">
+                ${item.opts.map((opt, oi) => `
+                    <button class="action-btn" style="padding:7px 10px; margin-bottom:5px;" onclick="answerQuiz(${qi}, ${oi}, this)">
+                        ${opt}
+                    </button>
+                `).join("")}
+            </div>
+            <div id="quiz-fb-${qi}" style="display:none; font-size:12px; margin-top:4px;"></div>
+        </div>
+    `).join("");
+}
+
+function answerQuiz(qi, oi, btn) {
+    const item = QUIZ[qi];
+    const fb = document.getElementById("quiz-fb-" + qi);
+    fb.style.display = "block";
+    if (oi === item.ans) {
+        btn.style.borderColor = "#27ae60";
+        fb.className = "alert alert-success";
+        fb.textContent = item.why;
+    } else {
+        btn.style.borderColor = "#e74c3c";
+        fb.className = "alert alert-error";
+        fb.textContent = IS_EN ? "Not quite — try another answer." : "Pas tout à fait — essayez une autre réponse.";
+    }
+}
+
+updateSandbox();
+renderQuiz();
+</script>
+
 {% endblock %}

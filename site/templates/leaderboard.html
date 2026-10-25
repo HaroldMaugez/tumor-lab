@@ -1,31 +1,36 @@
 {% extends "base.html" %}
-{% block title %}Classement — Tumor Lab{% endblock %}
+{% block title %}{{ "Leaderboard — Tumor Lab" if is_en else "Classement — Tumor Lab" }}{% endblock %}
 {% block content %}
 
-<h1>Classement</h1>
-<p class="text-muted">Mis à jour en temps réel.</p>
+<h1>{{ "Leaderboard" if is_en else "Classement" }}</h1>
+<p class="text-muted">
+    {{ "Live high scores across clinical modes (Tutorial games are excluded so you can practice freely)." if is_en else "Meilleurs scores en temps réel (les parties du Tutoriel sont exclues pour s'entraîner librement)." }}
+</p>
 
-<div class="card">
+<div class="card mt">
     <table>
         <thead>
             <tr>
                 <th>#</th>
-                <th>Joueur</th>
+                <th>{{ "Player" if is_en else "Joueur" }}</th>
+                <th>{{ "Mode" if is_en else "Mode" }}</th>
                 <th>Score</th>
-                <th>Résultat</th>
-                <th>Tours</th>
-                <th>Dose</th>
-                <th>Toxicité</th>
+                <th>{{ "Outcome" if is_en else "Résultat" }}</th>
+                <th>{{ "Turns" if is_en else "Tours" }}</th>
+                <th>{{ "Dose" if is_en else "Dose" }}</th>
+                <th>{{ "Toxicity" if is_en else "Toxicité" }}</th>
                 <th>Date</th>
             </tr>
         </thead>
         <tbody id="lb-body">
-            <tr><td colspan="8" class="text-muted text-center">Chargement...</td></tr>
+            <tr><td colspan="9" class="text-muted text-center">{{ "Loading..." if is_en else "Chargement..." }}</td></tr>
         </tbody>
     </table>
 </div>
 
 <script>
+const IS_EN = {{ "true" if is_en else "false" }};
+
 async function loadLeaderboard() {
     const res = await fetch("/api/leaderboard");
     const data = await res.json();
@@ -35,22 +40,30 @@ async function loadLeaderboard() {
 function render(rows) {
     const tbody = document.getElementById("lb-body");
     if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-muted text-center">Aucune partie jouée</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="9" class="text-muted text-center">${IS_EN ? "No non-tutorial games completed yet — be the first." : "Aucune partie classée jouée pour l'instant."}</td></tr>`;
         return;
     }
+    const outcomes = IS_EN ? {
+        "victoire_totale": "Total Cure",
+        "controle_durable": "Controlled",
+        "echec_controle": "Partial",
+        "toxicite_letale": "Toxicity",
+        "progression": "Progression"
+    } : {
+        "victoire_totale": "Victoire",
+        "controle_durable": "Contrôle",
+        "echec_controle": "Partiel",
+        "toxicite_letale": "Toxicité",
+        "progression": "Progression"
+    };
     tbody.innerHTML = rows.map((r, i) => {
         const rank = i + 1;
         const cls = rank <= 3 ? " rank-" + rank : "";
-        const outcome = {
-            "victoire_totale": "🏆 Victoire",
-            "controle_durable": "✅ Contrôle",
-            "echec_controle": "❌ Échec",
-            "toxicite_letale": "💀 Toxicité",
-            "progression": "📈 Progression"
-        }[r.outcome] || r.outcome;
+        const outcome = outcomes[r.outcome] || r.outcome;
         return `<tr class="${cls}">
             <td>${rank}</td>
             <td><strong>${r.username}</strong></td>
+            <td class="text-muted">${r.scenario || "standard"}</td>
             <td><strong>${(r.score||0).toFixed(0)}</strong></td>
             <td>${outcome}</td>
             <td>${r.turns}</td>
@@ -61,8 +74,6 @@ function render(rows) {
     }).join("");
 }
 
-// Polling court : ne monopolise pas un worker PythonAnywhere comme un SSE
-// permanent, et reste suffisant pour un classement de démonstration.
 loadLeaderboard();
 setInterval(loadLeaderboard, 5000);
 </script>

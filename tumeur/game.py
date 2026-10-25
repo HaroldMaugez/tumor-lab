@@ -229,6 +229,7 @@ class GameConfig:
     vascular_abnormality: float = 0.45
     # Le modèle vascularisé est le mode humain fictif du jeu, pas une prédiction patient.
     model_regime: str = "avasculaire_validated"
+    sim_dt_max: float = 600.0
 
 
 SCENARIOS: Dict[str, Dict] = {
@@ -553,7 +554,7 @@ class TumorGame:
         dt_days = self.cfg.turn_days + extra_days
         target = (self.day + dt_days)
         n_before = self._snapshot().n_cells
-        self.sim.run(target, dt_max=600.0, record_every_h=24.0)
+        self.sim.run(target, dt_max=self.cfg.sim_dt_max, record_every_h=24.0)
         self.day = self.sim.t / SECONDS_PER_DAY
 
         # mutation de novo : nb de divisions ~ log2 de la croissance nette

@@ -19,11 +19,13 @@ import sqlite3
 from functools import wraps
 from hashlib import pbkdf2_hmac
 from pathlib import Path
+from urllib.parse import urlencode, urlparse, parse_qsl, urlunparse
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
     session, jsonify, Response,
 )
+from itsdangerous import URLSafeSerializer, BadSignature
 from werkzeug.exceptions import HTTPException
 
 # --- Python engine & i18n path --------------------------------------------
@@ -41,8 +43,6 @@ import numpy as np
 
 # --- App setup -------------------------------------------------------------
 app = Flask(__name__)
-# Une clé stable est indispensable : os.urandom() invalide toutes les sessions
-# à chaque reload du worker PythonAnywhere. Elle doit être définie en production.
 app.secret_key = os.environ.get("TUMORLAB_SECRET_KEY", "dev-only-change-me")
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
@@ -52,14 +52,45 @@ app.config.update(
 
 DB_PATH = os.path.join(SITE_DIR, "tumorlab.db")
 VALIDATION_JSON_PATH = os.path.join(ENGINE_DIR, "resultats", "validation_checks.json")
+AI_METRICS_JSON_PATH = os.path.join(ENGINE_DIR, "resultats", "ai_training_metrics.json")
+
+
+def _token_serializer() -> URLSafeSerializer:
+    return URLSafeSerializer(app.secret_key, salt="tumorlab-player-v1")
+
+
+def make_player_token(user_id: int) -> str:
+    return _token_serializer().dumps({"uid": int(user_id)})
+
+
+def verify_player_token(token: str | None) -> int | None:
+    if not token:
+        return None
+    try:
+        payload = _token_serializer().loads(token)
+        uid = int(payload.get("uid"))
+        return uid if uid > 0 else None
+    except (BadSignature, ValueError, TypeError, AttributeError):
+        return None
 
 
 def get_lang() -> str:
     q = request.args.get("lang")
     if q in ("en", "fr"):
         session["lang"] = q
+        return q
+    hdr = request.headers.get("X-Lang")
+    if hdr in ("en", "fr"):
+        return hdr
     lang = session.get("lang", "en")
     return lang if lang in ("en", "fr") else "en"
+
+
+def _with_lang_param(target_url: str, lang_code: str) -> str:
+    parsed = urlparse(target_url)
+    params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    params["lang"] = lang_code
+    return urlunparse(parsed._replace(query=urlencode(params)))
 
 
 @app.context_processor
@@ -74,9 +105,10 @@ def inject_globals():
 
 @app.route("/set-lang/<lang_code>")
 def set_lang(lang_code: str):
-    session["lang"] = "fr" if lang_code == "fr" else "en"
+    chosen = "fr" if lang_code == "fr" else "en"
+    session["lang"] = chosen
     nxt = request.args.get("next") or request.referrer or url_for("home")
-    return redirect(nxt)
+    return redirect(_with_lang_param(nxt, chosen))
 
 
 @app.errorhandler(Exception)
@@ -160,27 +192,57 @@ def verify_password(password: str, stored_hash: bytes, salt: bytes) -> bool:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  AUTH & 1-CLICK GUEST HELPERS
+#  AUTH & STATELESS TOKEN / GUEST HELPERS
 # ═══════════════════════════════════════════════════════════════════════════
+
+def _get_user_by_id(uid: int):
+    db = get_db()
+    user = db.execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
+    db.close()
+    return user
+
 
 def get_current_user():
     if "user_id" in session:
-        db = get_db()
-        user = db.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],)).fetchone()
-        db.close()
+        user = _get_user_by_id(int(session["user_id"]))
         if user is not None:
             return user
         session.pop("user_id", None)
+    tok = request.args.get("token") or request.headers.get("X-Player-Token")
+    uid = verify_player_token(tok)
+    if uid is not None:
+        return _get_user_by_id(uid)
     return None
 
 
-def ensure_user_or_guest():
-    """Return logged-in user, or create a lightweight guest session in 1 click."""
+def resolve_api_user_id(json_body: dict | None = None) -> int | None:
+    """Resolve user_id via signed token first (iframe-safe), then Flask session."""
+    tok = (
+        request.headers.get("X-Player-Token")
+        or (json_body.get("player_token") if isinstance(json_body, dict) else None)
+        or request.args.get("token")
+    )
+    uid = verify_player_token(tok)
+    if uid is not None and _get_user_by_id(uid) is not None:
+        return uid
+    if "user_id" in session:
+        s_uid = int(session["user_id"])
+        if _get_user_by_id(s_uid) is not None:
+            return s_uid
+    return None
+
+
+def ensure_user_or_guest(existing_uid: int | None = None):
+    """Return logged-in/token user, or create a lightweight guest session in 1 click."""
+    if existing_uid is not None:
+        u = _get_user_by_id(existing_uid)
+        if u is not None:
+            return u
     user = get_current_user()
     if user is not None:
         return user
     db = get_db()
-    for _ in range(10):
+    for _ in range(15):
         guest_name = f"Guest_{random.randint(1000, 9999)}"
         existing = db.execute("SELECT id FROM users WHERE username = ?", (guest_name,)).fetchone()
         if not existing:
@@ -198,11 +260,18 @@ def ensure_user_or_guest():
     return None
 
 
-def login_required(f):
+def api_auth_required(f):
+    """Ensure API endpoints NEVER return HTML 302 redirects."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        if get_current_user() is None:
-            return redirect(url_for("login"))
+        data = request.get_json(silent=True) if request.is_json else None
+        uid = resolve_api_user_id(data)
+        if uid is None:
+            msg = ("Game session missing — please start a new game."
+                   if get_lang() == "en"
+                   else "Session introuvable — veuillez relancer une partie.")
+            return jsonify({"ok": False, "error": msg}), 401
+        request.api_user_id = uid
         return f(*args, **kwargs)
     return decorated
 
@@ -228,9 +297,10 @@ def guest_start():
     """1-click guest session so anyone can try the app without registering."""
     ensure_user_or_guest()
     scenario = request.args.get("scenario")
+    lang = get_lang()
     if scenario and scenario in SCENARIOS:
-        return redirect(url_for("play", scenario=scenario))
-    return redirect(url_for("home"))
+        return redirect(url_for("play", scenario=scenario, lang=lang))
+    return redirect(url_for("home", lang=lang))
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -262,7 +332,7 @@ def register():
                 session["user_id"] = user["id"]
                 session["username"] = user["username"]
                 session["is_guest"] = False
-                return redirect(url_for("home"))
+                return redirect(url_for("home", lang=lang))
             db.close()
     return render_template("register.html", error=error, user=get_current_user())
 
@@ -281,7 +351,7 @@ def login():
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             session["is_guest"] = False
-            return redirect(url_for("home"))
+            return redirect(url_for("home", lang=lang))
         error = ("Incorrect username or password." if lang == "en"
                  else "Nom d'utilisateur ou mot de passe incorrect.")
     return render_template("login.html", error=error, user=get_current_user())
@@ -289,28 +359,35 @@ def login():
 
 @app.route("/logout")
 def logout():
-    keep_lang = session.get("lang", "en")
+    keep_lang = get_lang()
     session.clear()
     session["lang"] = keep_lang
-    return redirect(url_for("home"))
+    return redirect(url_for("home", lang=keep_lang))
 
 
 @app.route("/play/<scenario>")
 def play(scenario):
     """Automatically let new visitors play in 1 click via Guest session."""
-    if scenario not in SCENARIOS:
-        return redirect(url_for("home"))
-    user = ensure_user_or_guest()
     lang = get_lang()
-    scenario_meta = SCENARIOS_I18N[lang].get(scenario, {"name": scenario, "desc": "", "icon": "🎮"})
-    return render_template("game.html", scenario=scenario, scenario_meta=scenario_meta, user=user)
+    if scenario not in SCENARIOS:
+        return redirect(url_for("home", lang=lang))
+    user = ensure_user_or_guest()
+    player_token = make_player_token(user["id"]) if user else ""
+    scenario_meta = SCENARIOS_I18N[lang].get(scenario, {"name": scenario, "desc": "", "badge": ""})
+    return render_template(
+        "game.html",
+        scenario=scenario,
+        scenario_meta=scenario_meta,
+        user=user,
+        player_token=player_token,
+    )
 
 
 @app.route("/api/game/export")
-@login_required
+@api_auth_required
 def api_game_export():
     """Export the current or last active game for analysis."""
-    game = _get_game(session["user_id"])
+    game = _get_game(request.api_user_id)
     if game is None:
         return jsonify({"ok": False, "error": "No active game / Aucune partie disponible."}), 404
     fmt = request.args.get("format", "json").lower()
@@ -368,20 +445,27 @@ def leaderboard():
 
 @app.route("/tests")
 def tests_page():
-    return render_template("tests.html", user=get_current_user())
+    ai_meta = None
+    if os.path.exists(AI_METRICS_JSON_PATH):
+        try:
+            with open(AI_METRICS_JSON_PATH, "r", encoding="utf-8") as f:
+                ai_meta = json.load(f).get("metadata")
+        except Exception:
+            ai_meta = None
+    return render_template("tests.html", user=get_current_user(), ai_meta=ai_meta)
 
 
 @app.route("/references")
 def references():
     refs = [
         {"id": 1, "authors": "Freyer JP & Sutherland RM", "year": 1986, "title": "Regulation of growth saturation and development of necrosis in EMT6/Ro multicellular spheroids by the glucose and oxygen supply", "journal": "Cancer Res", "volume": "46", "pages": "3504–3512", "doi": "10.1111/j.1365-2184.1992.tb01433.x", "usage": "Primary validation source: 8 nutrient media, saturation diameters, viable rim thicknesses, necrosis onset.", "usage_fr": "Source principale de validation. Matrice de 8 milieux, diamètres de saturation, couronnes viables, diamètres d'apparition de la nécrose.", "category": "Calibration"},
-        {"id": 2, "authors": "Freyer JP & Sutherland RM", "year": 1985, "title": "A reduction in the in situ rates of oxygen and glucose consumption of cells in EMT6/Ro spheroids during growth", "journal": "J Cell Physiol", "volume": "124", "pages": "516–524", "doi": "10.1002/jcp.1041240323", "usage": "Per-cell O₂ and glucose uptake drops 2.5× at 1300 µm diameter.", "usage_fr": "Consommation d'O₂ et de glucose par cellule divisée par 2.5 à 1300 µm.", "category": "Calibration"},
-        {"id": 3, "authors": "Mueller-Klieser W & Sutherland RM", "year": 1982, "title": "Influence of convection in the growth medium on oxygen tensions in multicellular tumor spheroids", "journal": "Br J Cancer", "volume": "45", "pages": "256–264", "doi": "10.1038/bjc198241", "usage": "Microelectrode pO₂ scans: central pO₂ drops from 66 mmHg (Ø 400 µm) to 13 mmHg (Ø 1000 µm).", "usage_fr": "Microélectrodes : pO₂ centrale EMT6/Ro 66 mmHg à Ø 400 µm → 13 mmHg à Ø 1000 µm.", "category": "Calibration"},
-        {"id": 4, "authors": "Casciari JJ, Sotirchos SV & Sutherland RM", "year": 1988, "title": "Glucose diffusivity in multicellular tumor spheroids", "journal": "Cancer Res", "volume": "48", "pages": "3905–3909", "doi": "10.1158/0008-5472.CAN-88-3905", "usage": "Measured glucose diffusivity in EMT6/Ro = 1.1 × 10⁻⁶ cm²/s.", "usage_fr": "D_glucose (EMT6/Ro) = 1.1 × 10⁻⁶ cm²/s.", "category": "Calibration"},
-        {"id": 5, "authors": "Grimes DR et al.", "year": 2014, "title": "A method for estimating the oxygen consumption rate in multicellular tumour spheroids", "journal": "J R Soc Interface", "volume": "11", "pages": "20131124", "doi": "10.1098/rsif.2013.1124", "usage": "O₂ diffusion limit 233 ± 22 µm; OCR ≈ 5.6 × 10⁻¹⁷ mol/cell/s.", "usage_fr": "Limite de diffusion de l'O₂ 233 ± 22 µm ; OCR ≈ 5.6 × 10⁻¹⁷ mol/cellule/s.", "category": "Calibration"},
+        {"id": 2, "authors": "Freyer JP & Sutherland RM", "year": 1985, "title": "A reduction in the in situ rates of oxygen and glucose consumption of cells in EMT6/Ro spheroids during growth", "journal": "J Cell Physiol", "volume": "124", "pages": "516–524", "doi": "10.1002/jcp.1041240323", "usage": "Per-cell O2 and glucose uptake drops 2.5x at 1300 µm diameter.", "usage_fr": "Consommation d'O2 et de glucose par cellule divisée par 2.5 à 1300 µm.", "category": "Calibration"},
+        {"id": 3, "authors": "Mueller-Klieser W & Sutherland RM", "year": 1982, "title": "Influence of convection in the growth medium on oxygen tensions in multicellular tumor spheroids", "journal": "Br J Cancer", "volume": "45", "pages": "256–264", "doi": "10.1038/bjc198241", "usage": "Microelectrode pO2 scans: central pO2 drops from 66 mmHg (400 µm) to 13 mmHg (1000 µm).", "usage_fr": "Microélectrodes : pO2 centrale EMT6/Ro 66 mmHg à 400 µm vers 13 mmHg à 1000 µm.", "category": "Calibration"},
+        {"id": 4, "authors": "Casciari JJ, Sotirchos SV & Sutherland RM", "year": 1988, "title": "Glucose diffusivity in multicellular tumor spheroids", "journal": "Cancer Res", "volume": "48", "pages": "3905–3909", "doi": "10.1158/0008-5472.CAN-88-3905", "usage": "Measured glucose diffusivity in EMT6/Ro = 1.1 x 10^-6 cm²/s.", "usage_fr": "D_glucose (EMT6/Ro) = 1.1 x 10^-6 cm²/s.", "category": "Calibration"},
+        {"id": 5, "authors": "Grimes DR et al.", "year": 2014, "title": "A method for estimating the oxygen consumption rate in multicellular tumour spheroids", "journal": "J R Soc Interface", "volume": "11", "pages": "20131124", "doi": "10.1098/rsif.2013.1124", "usage": "O2 diffusion limit 233 ± 22 µm; OCR ≈ 5.6 x 10^-17 mol/cell/s.", "usage_fr": "Limite de diffusion de l'O2 233 ± 22 µm ; OCR ≈ 5.6 x 10^-17 mol/cellule/s.", "category": "Calibration"},
         {"id": 6, "authors": "Ward JP & King JR", "year": 1997, "title": "Mathematical modelling of avascular-tumour growth", "journal": "IMA J Math Appl Med Biol", "volume": "14", "pages": "39–69", "doi": "10.1093/imammb/14.1.39", "usage": "Continuous free-boundary formalism with internal velocity field.", "usage_fr": "Formalisme continu : champ de vitesse interne engendré par les variations de volume.", "category": "Modèle"},
-        {"id": 7, "authors": "Bertuzzi A et al.", "year": 2010, "title": "Necrotic core in EMT6/Ro tumour spheroids: is it caused by an ATP deficit?", "journal": "J Theor Biol", "volume": "262", "pages": "142–150", "doi": "10.1016/j.jtbi.2009.09.024", "usage": "Cell death is triggered by an ATP production threshold rather than O₂ alone.", "usage_fr": "La mort cellulaire est déclenchée par un seuil sur la production d'ATP, pas par un seuil d'oxygène.", "category": "Modèle"},
-        {"id": 8, "authors": "Bozic I et al.", "year": 2010, "title": "Accumulation of driver and passenger mutations during tumor progression", "journal": "PNAS", "volume": "107", "pages": "18545–18550", "doi": "10.1073/pnas.1010978107", "usage": "Evolutionary parameters: u = 3.4 × 10⁻⁵, s = 0.004 ± 0.0004, v ≈ 0.016.", "usage_fr": "Socle du moteur évolutif : u = 3.4 × 10⁻⁵, s = 0.004 ± 0.0004, v ≈ 0.016.", "category": "Évolution"},
+        {"id": 7, "authors": "Bertuzzi A et al.", "year": 2010, "title": "Necrotic core in EMT6/Ro tumour spheroids: is it caused by an ATP deficit?", "journal": "J Theor Biol", "volume": "262", "pages": "142–150", "doi": "10.1016/j.jtbi.2009.09.024", "usage": "Cell death is triggered by an ATP production threshold rather than O2 alone.", "usage_fr": "La mort cellulaire est déclenchée par un seuil sur la production d'ATP, pas par un seuil d'oxygène.", "category": "Modèle"},
+        {"id": 8, "authors": "Bozic I et al.", "year": 2010, "title": "Accumulation of driver and passenger mutations during tumor progression", "journal": "PNAS", "volume": "107", "pages": "18545–18550", "doi": "10.1073/pnas.1010978107", "usage": "Evolutionary parameters: u = 3.4 x 10^-5, s = 0.004 ± 0.0004, v ≈ 0.016.", "usage_fr": "Socle du moteur évolutif : u = 3.4 x 10^-5, s = 0.004 ± 0.0004, v ≈ 0.016.", "category": "Évolution"},
         {"id": 9, "authors": "Williams MJ et al.", "year": 2016, "title": "Identification of neutral tumor evolution across cancer types", "journal": "Nat Genet", "volume": "48", "pages": "238–244", "doi": "10.1038/ng.3489", "usage": "Neutral 1/f power law (R² ≥ 0.98 threshold; our engine achieves R² = 0.988).", "usage_fr": "Loi 1/f : M(f) ∝ 1/f, R² ≥ 0.98 comme seuil. Mon modèle atteint R² = 0.988.", "category": "Évolution"},
         {"id": 10, "authors": "Alper T & Howard-Flanders P", "year": 1956, "title": "Role of oxygen in modifying the radiosensitivity of E. coli B", "journal": "Nature", "volume": "178", "pages": "978–979", "doi": "10.1038/178978a0", "usage": "Classic OER equation for hypoxic radioresistance (OER_max ≈ 3, K ≈ 3 mmHg).", "usage_fr": "Formule historique de l'OER : OER_max ≈ 3, K ≈ 3 mmHg.", "category": "Radiobiologie"},
         {"id": 11, "authors": "Emami B et al.", "year": 1991, "title": "Tolerance of normal tissue to therapeutic irradiation", "journal": "Int J Radiat Oncol Biol Phys", "volume": "21", "pages": "109–122", "doi": "10.1016/0360-3016(91)90171-Y", "usage": "Healthy organ tolerance doses (TD5/5 and TD50/5) per organ.", "usage_fr": "Doses de tolérance TD5/5 et TD50/5 par organe. Source des paramètres LKB.", "category": "Toxicité"},
@@ -393,8 +477,8 @@ def references():
         {"id": 17, "authors": "Jain RK", "year": 2005, "title": "Normalization of tumor vasculature", "journal": "Science", "volume": "307", "pages": "58–62", "doi": "10.1126/science.1104819", "usage": "Vascular normalization window and abnormal tumor perfusion.", "usage_fr": "Cadre de normalisation vasculaire et perfusion anormale.", "category": "Angiogenèse"},
         {"id": 18, "authors": "Folkman J", "year": 1971, "title": "Tumor angiogenesis: therapeutic implications", "journal": "N Engl J Med", "volume": "285", "pages": "1182–1186", "doi": "10.1056/NEJM197111182852108", "usage": "Foundational angiogenesis paper: ~1–2 mm³ diffusion limit triggers vessel recruitment.", "usage_fr": "L'article fondateur. Seuil 1–2 mm³ pour le recrutement vasculaire.", "category": "Angiogenèse"},
         {"id": 19, "authors": "Carmeliet P & Jain RK", "year": 2011, "title": "Molecular mechanisms and clinical applications of angiogenesis", "journal": "Nat Rev Drug Discov", "volume": "10", "pages": "417–427", "doi": "10.1038/nrd3430", "usage": "Comprehensive review of vascular tumor mechanisms.", "usage_fr": "Revue complète des mécanismes vasculaires tumoraux. Fonde vascular_scenario.", "category": "Angiogenèse"},
-        {"id": 20, "authors": "Vaupel P & Mayer A", "year": 2007, "title": "Hypoxia in cancer: significance and impact on clinical outcome", "journal": "Cancer Metastasis Rev", "volume": "26", "pages": "225–239", "doi": "10.1007/s10555-007-9055-1", "usage": "Measured pO₂ in human tumors (10–25 mmHg) and diagnostic prognostic value.", "usage_fr": "pO₂ mesurées dans les tumeurs humaines (10–25 mmHg). Borne de vascular_oxygen.", "category": "Angiogenèse"},
-        {"id": 21, "authors": "Alfonso JCL & Berk L", "year": 2019, "title": "Modeling the effect of intratumoral heterogeneity of radiosensitivity on tumor response over the course of fractionated radiation therapy", "journal": "Radiat Oncol", "volume": "14", "pages": "88", "doi": "10.1186/s13014-019-1288-y", "usage": "Analytical distribution of α radiosensitivity under fractionated radiation.", "usage_fr": "La résistance est une réduction héritable de α (ResistanceDistribution).", "category": "Radiobiologie"},
+        {"id": 20, "authors": "Vaupel P & Mayer A", "year": 2007, "title": "Hypoxia in cancer: significance and impact on clinical outcome", "journal": "Cancer Metastasis Rev", "volume": "26", "pages": "225–239", "doi": "10.1007/s10555-007-9055-1", "usage": "Measured pO2 in human tumors (10–25 mmHg) and diagnostic prognostic value.", "usage_fr": "pO2 mesurées dans les tumeurs humaines (10–25 mmHg). Borne de vascular_oxygen.", "category": "Angiogenèse"},
+        {"id": 21, "authors": "Alfonso JCL & Berk L", "year": 2019, "title": "Modeling the effect of intratumoral heterogeneity of radiosensitivity on tumor response over the course of fractionated radiation therapy", "journal": "Radiat Oncol", "volume": "14", "pages": "88", "doi": "10.1186/s13014-019-1288-y", "usage": "Analytical distribution of alpha radiosensitivity under fractionated radiation.", "usage_fr": "La résistance est une réduction héritable de alpha (ResistanceDistribution).", "category": "Radiobiologie"},
         {"id": 22, "authors": "Marks LB et al.", "year": 2010, "title": "Use of normal tissue complication probability models in the clinic (QUANTEC)", "journal": "IJROBP", "volume": "76", "pages": "S10–S19", "doi": "10.1016/j.ijrobp.2009.07.754", "usage": "Modern clinical QUANTEC normal-tissue dose-response guidelines.", "usage_fr": "Révision moderne d'Emami. Récupération tissulaire ~25 % à 6 mois.", "category": "Toxicité"},
         {"id": 23, "authors": "Drasdo D & Höhme S", "year": 2005, "title": "A single-cell-based model of tumor growth in vitro", "journal": "Phys Biol", "volume": "2", "pages": "133–147", "doi": "10.1088/1478-3975/2/3/001", "usage": "Center-based 3D agent mechanics used for cross-validation.", "usage_fr": "Modèle centre-based du module agents. Forces de répulsion/adhésion.", "category": "Modèle"},
         {"id": 24, "authors": "Hanahan D", "year": 2022, "title": "Hallmarks of Cancer: New Dimensions", "journal": "Cancer Discovery", "volume": "12", "pages": "31–46", "doi": "10.1158/2159-8290.CD-21-1059", "usage": "Conceptual oncology framework for proliferative signaling and microenvironment.", "usage_fr": "Cadre général des Hallmarks of Cancer.", "category": "Général"},
@@ -487,8 +571,12 @@ def _jsonable(o):
 
 @app.route("/api/game/reset", methods=["POST"])
 def api_reset():
-    ensure_user_or_guest()
     data = request.get_json() or {}
+    existing_uid = resolve_api_user_id(data)
+    user = ensure_user_or_guest(existing_uid=existing_uid)
+    uid = int(user["id"])
+    player_token = make_player_token(uid)
+
     scenario = data.get("scenario", "standard")
     seed = data.get("seed", int(time.time()) % 100000)
     organ = data.get("organ")
@@ -505,11 +593,12 @@ def api_reset():
     game = TumorGame(cfg)
     game.scenario_name = scenario
     with _game_lock:
-        _games[session["user_id"]] = game
-        _save_active_game(session["user_id"], scenario, game)
+        _games[uid] = game
+        _save_active_game(uid, scenario, game)
         obs = game.observe()
     return jsonify({
         "ok": True,
+        "player_token": player_token,
         "scenario": scenario,
         "observation": _jsonable(obs),
         "config": {
@@ -528,9 +617,10 @@ def api_reset():
 
 
 @app.route("/api/game/step", methods=["POST"])
-@login_required
+@api_auth_required
 def api_step():
-    game = _get_game(session["user_id"])
+    uid = request.api_user_id
+    game = _get_game(uid)
     if game is None:
         return jsonify({"ok": False, "error": "Game not initialized / Partie non initialisée."}), 400
     data = request.get_json() or {}
@@ -539,7 +629,7 @@ def api_step():
     try:
         with _game_lock:
             result = game.step(action)
-            _save_active_game(session["user_id"], scenario_name, game)
+            _save_active_game(uid, scenario_name, game)
     except Exception as exc:
         app.logger.exception("Erreur pendant le calcul d'un tour")
         return jsonify({
@@ -568,15 +658,15 @@ def api_step():
         "outcome": result.outcome,
         "info": public_info,
     }
-    if result.done and "user_id" in session:
-        _save_game_result(session["user_id"], game, result)
+    if result.done:
+        _save_game_result(uid, game, result)
     return jsonify(resp)
 
 
 @app.route("/api/game/ai", methods=["POST"])
-@login_required
+@api_auth_required
 def api_ai():
-    game = _get_game(session["user_id"])
+    game = _get_game(request.api_user_id)
     if game is None:
         return jsonify({"ok": False, "error": "Game not initialized / Partie non initialisée."}), 400
     with _game_lock:
@@ -585,18 +675,18 @@ def api_ai():
 
 
 @app.route("/api/game/state", methods=["GET"])
-@login_required
+@api_auth_required
 def api_state():
-    game = _get_game(session["user_id"])
+    game = _get_game(request.api_user_id)
     if game is None:
         return jsonify({"ok": False, "error": "Game not initialized / Partie non initialisée."}), 400
     return jsonify({"ok": True, "observation": _jsonable(game.observe())})
 
 
 @app.route("/api/game/actions", methods=["GET"])
-@login_required
+@api_auth_required
 def api_actions():
-    game = _get_game(session["user_id"])
+    game = _get_game(request.api_user_id)
     if game is None:
         return jsonify({"ok": False, "error": "Game not initialized / Partie non initialisée."}), 400
     from tumeur.game import GLUCOSE_LEVELS, OXYGEN_LEVELS
@@ -634,7 +724,7 @@ def api_leaderboard():
 # ═══════════════════════════════════════════════════════════════════════════
 
 _tests_cache = None
-_tests_status = "idle"  # idle | running | done | error
+_tests_status = "idle"
 
 
 def _load_saved_validation():
@@ -702,7 +792,7 @@ def api_tests_run():
         return jsonify({"status": "running"}), 202
 
     if _tests_cache is None:
-        saved = _load_validation_from_disk_if_available()
+        saved = _load_saved_validation()
         if saved is not None:
             _tests_cache = saved
             _tests_status = "done"
@@ -712,10 +802,6 @@ def api_tests_run():
 
     threading.Thread(target=_run_tests, daemon=True).start()
     return jsonify({"status": "running"}), 202
-
-
-def _load_validation_from_disk_if_available():
-    return _load_saved_validation()
 
 
 # ═══════════════════════════════════════════════════════════════════════════
