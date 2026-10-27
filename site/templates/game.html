@@ -2,12 +2,12 @@
 {% block title %}{{ scenario_meta.name }} — Tumor Lab{% endblock %}
 {% block content %}
 
-<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:15px;">
+<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:18px;">
     <div>
-        <h1 style="margin-bottom:2px;">{{ scenario_meta.name }}</h1>
+        <h1 style="margin-bottom:4px;">{{ scenario_meta.name }}</h1>
         <div class="text-muted">{{ scenario_meta.desc }}</div>
     </div>
-    <div style="display:flex; flex-wrap:wrap; gap:6px;">
+    <div style="display:flex; flex-wrap:wrap; gap:8px;">
         <button class="btn btn-secondary btn-small" onclick="toggleBeginnerHelp()" id="btn-beginner">
             {{ "Beginner Help: ON" if is_en else "Aide débutant : OUI" }}
         </button>
@@ -27,9 +27,9 @@
 <!-- Organ Picker (Before Game Starts) -->
 <div id="organ-picker" class="card">
     {% if scenario == 'tutoriel' %}
-    <div class="tutorial-box" style="margin-bottom:15px;">
-        <strong>{{ "First time here? Start in 1 click" if is_en else "Première visite ? Démarrez en 1 clic" }}</strong>
-        <p style="font-size:13px; margin:6px 0 10px;">
+    <div class="tutorial-box" style="margin-bottom:20px;">
+        <strong style="font-size:17px;">{{ "First time here? Start in 1 click" if is_en else "Première visite ? Démarrez en 1 clic" }}</strong>
+        <p style="margin:6px 0 12px;">
             {% if is_en %}
                 We pre-selected a forgiving tissue below so you can discover scans, biopsies and gentle radiation step-by-step without stress.
             {% else %}
@@ -43,7 +43,7 @@
     {% endif %}
 
     <h2>{{ "Choose the Surrounding Organ" if is_en else "Choisissez l'organe voisin de la tumeur" }}</h2>
-    <p style="margin-bottom:12px;">
+    <p style="margin-bottom:14px;">
         {% if is_en %}
             Radiation passes through healthy tissue around the tumor. Fragile organs tolerate much less radiation before side effects appear.
         {% else %}
@@ -55,31 +55,31 @@
             <div class="badge">{{ "Easy" if is_en else "Facile" }}</div>
             <h3>{{ "Standard Tissue" if is_en else "Tissu standard" }}</h3>
             <p>{{ "Resilient healthy tissue, well shielded." if is_en else "Tissu résistant et bien protégé." }}</p>
-            <div class="text-muted" style="font-size:10px; margin-top:4px;">TD50 = 60 Gy · Sparing 0.6</div>
+            <div class="organ-tech">TD50 = 60 Gy · Sparing 0.6</div>
         </div>
         <div class="organ-picker-card" data-organ="colorectal" data-sparing="0.7" onclick="pickOrgan(this)">
             <div class="badge">{{ "Moderate" if is_en else "Modéré" }}</div>
             <h3>{{ "Colorectal" if is_en else "Colorectal" }}</h3>
             <p>{{ "Good tolerance if doses stay gentle." if is_en else "Bonne tolérance si les doses restent douces." }}</p>
-            <div class="text-muted" style="font-size:10px; margin-top:4px;">TD50 = 80 Gy · Sparing 0.7</div>
+            <div class="organ-tech">TD50 = 80 Gy · Sparing 0.7</div>
         </div>
         <div class="organ-picker-card" data-organ="sein" data-sparing="0.8" onclick="pickOrgan(this)">
             <div class="badge">{{ "Medium" if is_en else "Intermédiaire" }}</div>
             <h3>{{ "Breast" if is_en else "Sein" }}</h3>
             <p>{{ "Balanced sensitivity; watch cumulative dose." if is_en else "Sensibilité intermédiaire ; surveillez la dose." }}</p>
-            <div class="text-muted" style="font-size:10px; margin-top:4px;">TD50 = 72 Gy · Sparing 0.8</div>
+            <div class="organ-tech">TD50 = 72 Gy · Sparing 0.8</div>
         </div>
         <div class="organ-picker-card" data-organ="cerveau" data-sparing="1.0" onclick="pickOrgan(this)">
             <div class="badge">{{ "Sensitive" if is_en else "Sensible" }}</div>
             <h3>{{ "Brain" if is_en else "Cerveau" }}</h3>
             <p>{{ "No margin for large blasts (no shielding)." if is_en else "Aucune marge pour les fortes doses." }}</p>
-            <div class="text-muted" style="font-size:10px; margin-top:4px;">TD50 = 72 Gy · Sparing 1.0</div>
+            <div class="organ-tech">TD50 = 72 Gy · Sparing 1.0</div>
         </div>
         <div class="organ-picker-card" data-organ="poumon" data-sparing="1.0" onclick="pickOrgan(this)">
             <div class="badge">{{ "Very Fragile" if is_en else "Très fragile" }}</div>
             <h3>{{ "Lung" if is_en else "Poumon" }}</h3>
             <p>{{ "Extremely sensitive to radiation. Gentle pacing only." if is_en else "Extrêmement sensible aux rayons. Doses très douces." }}</p>
-            <div class="text-muted" style="font-size:10px; margin-top:4px;">TD50 = 24.5 Gy · Sparing 1.0</div>
+            <div class="organ-tech">TD50 = 24.5 Gy · Sparing 1.0</div>
         </div>
     </div>
     <button class="btn btn-success" onclick="startGame()">
@@ -89,35 +89,34 @@
 
 <!-- Interactive 5-Step Guided Walkthrough -->
 <div id="tutorial-box" class="tutorial-box" style="display:none;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <strong id="tuto-title" style="color:#1e8449;"></strong>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <strong id="tuto-title" style="font-size:17px;"></strong>
         <div>
             <button class="btn btn-secondary btn-small" onclick="nextTutoStep()" id="tuto-next-btn">
                 {{ "Next tip" if is_en else "Astuce suiv." }}
             </button>
-            <button class="btn btn-secondary btn-small" onclick="toggleGuide()" style="margin-left:4px;">
+            <button class="btn btn-secondary btn-small" onclick="toggleGuide()" style="margin-left:6px;">
                 {{ "Close" if is_en else "Fermer" }}
             </button>
         </div>
     </div>
-    <div id="tuto-body" style="font-size:13px;"></div>
+    <div id="tuto-body"></div>
 </div>
 
 <!-- Neural Network Advisor Panel -->
 <div id="coach-box" class="coach-box" style="display:none;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-        <div style="flex:1;">
-            <strong id="coach-header">PolicyValueNet</strong>
-            <p id="coach-tip" style="margin-top:4px; font-size:13px;"></p>
-            <div id="coach-probs" style="margin-top:8px; font-size:12px;"></div>
-            <div id="coach-meta" class="text-muted" style="margin-top:6px; font-size:11px;"></div>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:14px;">
+        <div style="flex:1; min-width:260px;">
+            <strong id="coach-header" style="font-size:16.5px;">PolicyValueNet</strong>
+            <p id="coach-tip" style="margin-top:6px;"></p>
+            <div id="coach-probs" style="margin-top:10px;"></div>
+            <div id="coach-meta" class="text-muted" style="margin-top:8px;"></div>
         </div>
-        <div style="text-align:right;">
+        <div style="display:flex; flex-direction:column; gap:8px;">
             <button class="btn btn-success btn-small" onclick="applyCoachAction()" id="btn-apply-coach">
                 {{ "Apply Action" if is_en else "Appliquer" }}
             </button>
-            <br>
-            <button class="btn btn-secondary btn-small" onclick="document.getElementById('coach-box').style.display='none'" style="margin-top:6px;">
+            <button class="btn btn-secondary btn-small" onclick="document.getElementById('coach-box').style.display='none'">
                 {{ "Close" if is_en else "Fermer" }}
             </button>
         </div>
@@ -133,18 +132,12 @@
     <!-- LEFT PANEL: Patient Scans + Diagnostic Reports + Actions -->
     <div class="game-panel" id="panel">
         <h3>{{ "1. Patient & Scans" if is_en else "1. Patient & Scanners" }}</h3>
-        <div class="beginner-note beginner-only">
+        <div class="beginner-note beginner-only" style="margin-bottom:12px;">
             {% if is_en %}
                 <strong>Goal:</strong> Shrink the tumor below <strong>400 µm</strong> (or eradicate it) while keeping Healthy Organ Toxicity well below <strong>50</strong>.
             {% else %}
                 <strong>Objectif :</strong> Réduire la tumeur sous <strong>400 µm</strong> (ou l'éliminer) en gardant la Toxicité bien en dessous de <strong>50</strong>.
             {% endif %}
-        </div>
-        <hr>
-
-        <div class="stat">
-            <label>{{ "Day / Protocol Time" if is_en else "Jour / Durée du suivi" }}</label>
-            <div class="value" id="day">—</div>
         </div>
 
         <div class="stat">
@@ -157,15 +150,21 @@
             <div class="sub beginner-only" id="diameter-mm"></div>
         </div>
 
-        <div class="stat">
-            <label>{{ "Blood Biomarker (Noisy Test)" if is_en else "Marqueur sanguin (bruité)" }}</label>
-            <div class="value" id="biomarker">—</div>
-            <div class="sub beginner-only">
-                {{ "Like a PSA blood test (±20% noise): tracks overall cell trend." if is_en else "Comme une prise de sang PSA (±20% de bruit) : indique la tendance globale." }}
+        <div class="stats-grid">
+            <div class="stat">
+                <label>{{ "Protocol Day" if is_en else "Jour du suivi" }}</label>
+                <div class="value" id="day">—</div>
+            </div>
+            <div class="stat">
+                <label>{{ "Blood Biomarker" if is_en else "Marqueur sanguin" }}</label>
+                <div class="value" id="biomarker">—</div>
+                <div class="sub beginner-only">
+                    {{ "±20% blood test noise" if is_en else "Prise de sang (±20%)" }}
+                </div>
             </div>
         </div>
 
-        <div class="stat">
+        <div class="stat" style="margin-top:12px;">
             <label>{{ "Healthy Organ Toxicity" if is_en else "Toxicité organe sain" }}</label>
             <div class="value" id="toxicity">—</div>
             <div class="bar"><div class="bar-fill green" id="tox-bar" style="width:0%"></div></div>
@@ -203,22 +202,22 @@
         <button class="action-btn game-action" id="act-po2" onclick="doAction({type:'po2_imaging'})">
             <div class="label">{{ "Oxygen Scan (pO2 Imaging)" if is_en else "Imagerie d'oxygène (pO2)" }}</div>
             <div class="desc">
-                {{ "Checks if the center lacks oxygen / hypoxia (costs 0.5 day)" if is_en else "Vérifie si le cœur manque d'oxygène / hypoxie (coût : 0,5 jour)" }}
+                {{ "Checks if the center lacks oxygen / hypoxia (1.5 days)" if is_en else "Vérifie si le cœur manque d'oxygène / hypoxie (1,5 jour)" }}
             </div>
         </button>
 
         <button class="action-btn game-action" id="act-biopsy" onclick="doAction({type:'biopsy'})">
             <div class="label">{{ "Needle Biopsy" if is_en else "Biopsie (prélèvement)" }}</div>
             <div class="desc">
-                {{ "Samples 60 cells to estimate radiation resistance % (costs 1 day)" if is_en else "Prélève 60 cellules pour estimer le % de résistance (coût : 1 jour)" }}
+                {{ "Samples 60 cells to estimate radiation resistance % (2 days)" if is_en else "Prélève 60 cellules pour estimer le % de résistance (2 jours)" }}
             </div>
         </button>
 
         <hr>
         <h3>{{ "4. Treatment & Rest" if is_en else "4. Traitement & Repos" }}</h3>
 
-        <div style="margin-bottom:10px; padding:8px; border:1px solid #eee; border-radius:6px;">
-            <label style="font-size:12px;">
+        <div class="control-box">
+            <label>
                 {{ "Radiation Dose:" if is_en else "Dose de rayons :" }}
                 <strong id="dose-val">2.0</strong> Gy
                 <span id="dose-hint" class="badge" style="margin-left:6px; margin-bottom:0;">
@@ -227,8 +226,8 @@
             </label>
             <input type="range" id="dose-slider" min="0.5" max="5" step="0.1" value="2.0"
                    oninput="onDoseSlider(this.value)"
-                   style="width:100%; margin:6px 0;">
-            <div class="text-muted beginner-only" style="font-size:11px; margin-bottom:6px;">
+                   style="width:100%; margin:10px 0;">
+            <div class="text-muted beginner-only" style="margin-bottom:8px;">
                 {{ "Tip: ~1.8–2.2 Gy spares healthy organs; 4–5 Gy damages fragile organs fast." if is_en else "Astuce : ~1,8–2,2 Gy protège l'organe sain ; 4–5 Gy abîme vite un organe fragile." }}
             </div>
             <button class="action-btn game-action" id="act-irradiate" onclick="doIrradiate()" style="margin-bottom:0;">
@@ -239,14 +238,14 @@
             </button>
         </div>
 
-        <div id="antiangio-section" style="display:none; margin-bottom:10px; padding:8px; border:1px solid #eee; border-radius:6px;">
-            <label style="font-size:12px;">
+        <div id="antiangio-section" class="control-box" style="display:none;">
+            <label>
                 {{ "Anti-angiogenic Intensity:" if is_en else "Intensité anti-angiogénique :" }}
                 <strong id="antiangio-val">0.65</strong>
             </label>
             <input type="range" id="antiangio-slider" min="0.2" max="1" step="0.05" value="0.65"
                    oninput="document.getElementById('antiangio-val').textContent=this.value"
-                   style="width:100%; margin:6px 0;">
+                   style="width:100%; margin:10px 0;">
             <button class="action-btn game-action" id="act-antiangio" onclick="doAntiangio()" style="margin-bottom:0;">
                 <div class="label">{{ "Anti-angiogenic Therapy" if is_en else "Anti-angiogénique" }}</div>
                 <div class="desc">
@@ -255,7 +254,7 @@
             </button>
         </div>
 
-        <button class="action-btn game-action" id="act-wait" onclick="doAction({type:'wait'})">
+        <button class="action-btn game-action" id="act-wait" onclick="doAction({type:'wait'})" style="margin-bottom:0;">
             <div class="label">{{ "Wait / Let Tissue Recover" if is_en else "Attendre (1 jour de repos)" }}</div>
             <div class="desc">
                 {{ "Advance 1 day without radiation to spare healthy tissue" if is_en else "Passer 1 jour sans rayons pour ménager l'organe sain" }}
@@ -266,15 +265,15 @@
     <!-- RIGHT PANEL: Visual Cross-Section + Plain-Language Explanation + Chart + Log -->
     <div class="game-main">
         <div class="tumor-canvas" id="tumor-canvas">
-            <canvas id="tumor-cv" width="460" height="330"></canvas>
+            <canvas id="tumor-cv" width="540" height="340" style="width:540px; max-width:100%; height:340px;"></canvas>
         </div>
 
         <!-- Visual Color Legend -->
         <div class="legend-row">
-            <span><span class="legend-dot" style="background:#a8d5a2;"></span>{{ "Living dividing cells" if is_en else "Cellules vivantes" }}</span>
-            <span><span class="legend-dot" style="background:#f7dc6f;"></span>{{ "Low-oxygen core (hypoxic)" if is_en else "Zone pauvre en O2 (hypoxie)" }}</span>
+            <span><span class="legend-dot" style="background:#9bd194;"></span>{{ "Living dividing cells" if is_en else "Cellules vivantes" }}</span>
+            <span><span class="legend-dot" style="background:#f5d04c;"></span>{{ "Low-oxygen core (hypoxic)" if is_en else "Zone pauvre en O2 (hypoxie)" }}</span>
             <span id="legend-vasc" style="display:none;"><span class="legend-dot" style="background:#e74c3c;"></span>{{ "Blood vessels" if is_en else "Vaisseaux" }}</span>
-            <span style="color:#27ae60; font-weight:bold;">--- {{ "400 µm Goal" if is_en else "Cible 400 µm" }}</span>
+            <span style="color:#1e8449; font-weight:bold;">--- {{ "400 µm Goal" if is_en else "Cible 400 µm" }}</span>
         </div>
 
         <!-- Plain-Language Turn Summary -->
@@ -286,14 +285,14 @@
             {% endif %}
         </div>
 
-        <div class="card" style="margin:0 0 10px 0; padding:14px;">
-            <h3 style="margin-bottom:6px;">{{ "Size & Toxicity Over Time" if is_en else "Évolution Taille & Toxicité" }}</h3>
-            <canvas id="chart-cv" width="520" height="155" style="width:100%; max-width:520px;"></canvas>
+        <div class="card" style="margin:0 0 16px 0; padding:18px;">
+            <h3 style="margin-bottom:8px;">{{ "Size & Toxicity Over Time" if is_en else "Évolution Taille & Toxicité" }}</h3>
+            <canvas id="chart-cv" width="600" height="190" style="width:100%; max-width:600px; height:190px;"></canvas>
         </div>
 
-        <div class="card" style="margin:0; padding:14px;">
-            <h3 style="margin-bottom:6px;">{{ "Clinical Log" if is_en else "Journal clinique" }}</h3>
-            <div id="log" style="max-height:160px; overflow-y:auto; font-size:12px; font-family:monospace; background:#f9f9f9; padding:8px; border-radius:4px;">{{ "Waiting for Day 0..." if is_en else "En attente du lancement..." }}</div>
+        <div class="card" style="margin:0; padding:18px;">
+            <h3 style="margin-bottom:8px;">{{ "Clinical Log" if is_en else "Journal clinique" }}</h3>
+            <div id="log" class="log-box">{{ "Waiting for Day 0..." if is_en else "En attente du lancement..." }}</div>
         </div>
     </div>
 </div>
@@ -374,6 +373,24 @@ const TUTO_STEPS = IS_EN ? [
         highlight: null
     }
 ];
+
+function setupHiDPICanvas(cv, logicalW, logicalH) {
+    const dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(logicalW * dpr) || cv.height !== Math.round(logicalH * dpr)) {
+        cv.width = Math.round(logicalW * dpr);
+        cv.height = Math.round(logicalH * dpr);
+    }
+    const ctx = cv.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return ctx;
+}
+
+window.onThemeChange = function() {
+    if (history.length > 0) {
+        drawTumor(gameData, false);
+        drawChart();
+    }
+};
 
 function toggleBeginnerHelp() {
     beginnerHelp = !beginnerHelp;
@@ -558,7 +575,7 @@ function showGameOver(outcome, score) {
     banner.className = "game-over-banner" + (isWin ? " win" : "");
     const tokQ = playerToken ? `&token=${encodeURIComponent(playerToken)}` : "";
     banner.innerHTML = (labels[outcome] || outcome) + " — Score : " + (score || 0).toFixed(0) +
-        "<div style='margin-top:10px; font-weight:normal;'>" +
+        "<div style='margin-top:12px; font-weight:normal;'>" +
         "<a href='{{ url_for('home', lang=lang) }}' class='btn btn-small'>" + (IS_EN ? "New Simulation" : "Nouvelle partie") + "</a> " +
         "<a href='{{ url_for('leaderboard', lang=lang) }}' class='btn btn-secondary btn-small' style='margin-left:6px;'>" + (IS_EN ? "Leaderboard" : "Classement") + "</a> " +
         "<a href='/api/game/export?format=json" + tokQ + "' class='btn btn-secondary btn-small' style='margin-left:6px;'>JSON</a> " +
@@ -705,10 +722,10 @@ async function askNeuralNet() {
             .sort((a, b) => b[1] - a[1])
             .map(([k, v]) => {
                 const pct = (v * 100).toFixed(1);
-                return `<div style="display:flex; align-items:center; gap:8px; margin-top:3px;">
-                    <span style="width:110px;">${names[k] || k}</span>
-                    <div style="flex:1; max-width:180px; height:8px; background:#dce6f1; border-radius:4px; overflow:hidden;">
-                        <div style="width:${pct}%; height:100%; background:#3498db;"></div>
+                return `<div style="display:flex; align-items:center; gap:10px; margin-top:5px; font-size:14.5px;">
+                    <span style="width:125px;">${names[k] || k}</span>
+                    <div style="flex:1; max-width:220px; height:10px; background:#d5e2ef; border-radius:5px; overflow:hidden;">
+                        <div style="width:${pct}%; height:100%; background:#2574a9;"></div>
                     </div>
                     <strong>${pct}%</strong>
                 </div>`;
@@ -757,7 +774,7 @@ async function runAI() {
 
 function updateUI(obs) {
     const dayVal = (obs.day !== undefined ? obs.day : 0);
-    document.getElementById("day").textContent = `${dayVal} / ${gameCfg.max_days || 70}` + (IS_EN ? " days" : " j");
+    document.getElementById("day").textContent = `${dayVal} / ${gameCfg.max_days || 70}` + (IS_EN ? " d" : " j");
 
     const diam = obs.diameter_um_observed || 0;
     document.getElementById("diameter").textContent = diam.toFixed(0) + " µm";
@@ -768,8 +785,8 @@ function updateUI(obs) {
 
     if (initialMarker) {
         const relPct = Math.round(((obs.serum_marker || 0) / initialMarker) * 100);
-        const arrow = relPct < 85 ? (IS_EN ? "Decreasing" : "En baisse")
-            : relPct > 115 ? (IS_EN ? "Rising" : "En hausse")
+        const arrow = relPct < 85 ? (IS_EN ? "Down" : "Baisse")
+            : relPct > 115 ? (IS_EN ? "Up" : "Hausse")
             : (IS_EN ? "Stable" : "Stable");
         document.getElementById("biomarker").textContent = `${relPct}% (${arrow})`;
     }
@@ -818,25 +835,25 @@ function updateUI(obs) {
 
 function drawTumor(observation, radiatedFlash) {
     const cv = document.getElementById("tumor-cv");
-    const ctx = cv.getContext("2d");
-    const W = cv.width, H = cv.height;
+    const W = 540, H = 340;
+    const ctx = setupHiDPICanvas(cv, W, H);
     ctx.clearRect(0, 0, W, H);
 
     const isDark = document.body.classList.contains("dark");
-    const cx = W / 2, cy = H / 2 - 6;
-    const maxR = Math.min(W, H) / 2 - 28;
+    const cx = W / 2, cy = H / 2 - 10;
+    const maxR = Math.min(W, H) / 2 - 36;
     const diam = observation.diameter_um_observed || 200;
     const r = Math.max(4, Math.min((diam / 2000) * maxR, maxR));
     const rGoal = ((gameCfg.control_diameter_um || 400) / 2000) * maxR;
 
     if ((observation.vascular_activity || 0) > 0.01) {
         const nVessels = Math.min(12, Math.max(4, Math.round(observation.vascular_activity * 25)));
-        ctx.strokeStyle = "rgba(231, 76, 60, 0.45)";
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(231, 76, 60, 0.55)";
+        ctx.lineWidth = 2.2;
         for (let i = 0; i < nVessels; i++) {
             const ang = (i / nVessels) * 2 * Math.PI;
             ctx.beginPath();
-            ctx.moveTo(cx + Math.cos(ang) * (r + 22), cy + Math.sin(ang) * (r + 22));
+            ctx.moveTo(cx + Math.cos(ang) * (r + 24), cy + Math.sin(ang) * (r + 24));
             ctx.lineTo(cx + Math.cos(ang) * (r * 0.55), cy + Math.sin(ang) * (r * 0.55));
             ctx.stroke();
         }
@@ -844,9 +861,9 @@ function drawTumor(observation, radiatedFlash) {
 
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-    ctx.fillStyle = radiatedFlash ? "#82e0aa" : "#a8d5a2";
+    ctx.fillStyle = radiatedFlash ? "#7dcea0" : "#9bd194";
     ctx.fill();
-    ctx.strokeStyle = radiatedFlash ? "#3498db" : "#6aaa64";
+    ctx.strokeStyle = radiatedFlash ? "#2574a9" : "#51924c";
     ctx.lineWidth = radiatedFlash ? 3 : 2;
     ctx.stroke();
 
@@ -858,47 +875,47 @@ function drawTumor(observation, radiatedFlash) {
     if (rhyp > 3) {
         ctx.beginPath();
         ctx.arc(cx, cy, rhyp, 0, 2 * Math.PI);
-        ctx.fillStyle = "rgba(244, 208, 63, 0.65)";
+        ctx.fillStyle = "rgba(245, 208, 76, 0.78)";
         ctx.fill();
     }
 
     ctx.save();
-    ctx.setLineDash([5, 4]);
+    ctx.setLineDash([6, 4]);
     ctx.beginPath();
     ctx.arc(cx, cy, rGoal, 0, 2 * Math.PI);
-    ctx.strokeStyle = "#27ae60";
-    ctx.lineWidth = 1.8;
+    ctx.strokeStyle = isDark ? "#2ecc71" : "#1e8449";
+    ctx.lineWidth = 2;
     ctx.stroke();
     ctx.restore();
 
-    ctx.fillStyle = isDark ? "#e0e0e0" : "#333";
-    ctx.font = "bold 12px Arial";
+    ctx.fillStyle = isDark ? "#f8fafc" : "#1a2b3c";
+    ctx.font = "bold 14px Arial";
     ctx.textAlign = "center";
-    ctx.fillText(`${diam.toFixed(0)} µm (${(diam/1000).toFixed(2)} mm)`, cx, cy + Math.max(r, rGoal) + 18);
+    ctx.fillText(`${diam.toFixed(0)} µm (${(diam/1000).toFixed(2)} mm)`, cx, cy + Math.max(r, rGoal) + 22);
 
     const scaleLen = maxR;
-    ctx.strokeStyle = isDark ? "#aaa" : "#666";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = isDark ? "#cbd5e1" : "#475569";
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(16, H - 14);
-    ctx.lineTo(16 + scaleLen, H - 14);
+    ctx.moveTo(20, H - 16);
+    ctx.lineTo(20 + scaleLen, H - 16);
     ctx.stroke();
-    ctx.font = "11px Arial";
+    ctx.font = "bold 13px Arial";
     ctx.textAlign = "left";
-    ctx.fillStyle = isDark ? "#aaa" : "#666";
-    ctx.fillText("1 mm (1000 µm)", 16, H - 20);
+    ctx.fillStyle = isDark ? "#cbd5e1" : "#334155";
+    ctx.fillText("1 mm (1000 µm)", 20, H - 24);
 }
 
 function drawChart() {
     const cv = document.getElementById("chart-cv");
-    const ctx = cv.getContext("2d");
-    const W = cv.width, H = cv.height;
+    const W = 600, H = 190;
+    const ctx = setupHiDPICanvas(cv, W, H);
     ctx.clearRect(0, 0, W, H);
     const isDark = document.body.classList.contains("dark");
 
     if (history.length < 2) {
-        ctx.fillStyle = isDark ? "#888" : "#999";
-        ctx.font = "12px Arial";
+        ctx.fillStyle = isDark ? "#cbd5e1" : "#475569";
+        ctx.font = "14px Arial";
         ctx.fillText(IS_EN ? "Play 1 turn to see the evolution curve..." : "Jouez 1 tour pour voir la courbe d'évolution...", 20, H / 2);
         return;
     }
@@ -909,22 +926,22 @@ function drawChart() {
 
     const maxD = Math.max(...diameters, goalD * 1.4, 600);
     const maxT = Math.max(...tox, gameCfg.lose_toxicity || 50);
-    const pad = 28;
+    const pad = 30;
 
     const yGoal = H - pad - (goalD / maxD) * (H - 2 * pad);
     ctx.save();
-    ctx.setLineDash([4, 4]);
+    ctx.setLineDash([5, 4]);
     ctx.beginPath();
-    ctx.strokeStyle = "#27ae60";
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = isDark ? "#2ecc71" : "#1e8449";
+    ctx.lineWidth = 1.6;
     ctx.moveTo(pad, yGoal);
     ctx.lineTo(W - pad, yGoal);
     ctx.stroke();
     ctx.restore();
 
     ctx.beginPath();
-    ctx.strokeStyle = "#3498db";
-    ctx.lineWidth = 2.2;
+    ctx.strokeStyle = isDark ? "#4da3ff" : "#2574a9";
+    ctx.lineWidth = 2.6;
     history.forEach((h, i) => {
         const x = pad + (i / (history.length - 1)) * (W - 2 * pad);
         const y = H - pad - (diameters[i] / maxD) * (H - 2 * pad);
@@ -933,8 +950,8 @@ function drawChart() {
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.strokeStyle = "#e74c3c";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = isDark ? "#f87171" : "#c0392b";
+    ctx.lineWidth = 2.4;
     history.forEach((h, i) => {
         const x = pad + (i / (history.length - 1)) * (W - 2 * pad);
         const y = H - pad - (tox[i] / maxT) * (H - 2 * pad);
@@ -942,13 +959,13 @@ function drawChart() {
     });
     ctx.stroke();
 
-    ctx.font = "11px Arial";
-    ctx.fillStyle = "#3498db";
-    ctx.fillText(IS_EN ? "Size (µm)" : "Diamètre (µm)", W - 115, 16);
-    ctx.fillStyle = "#e74c3c";
-    ctx.fillText(IS_EN ? "Toxicity" : "Toxicité", W - 115, 30);
-    ctx.fillStyle = "#27ae60";
-    ctx.fillText(IS_EN ? "Goal (400 µm)" : "Cible (400 µm)", W - 115, 44);
+    ctx.font = "bold 13px Arial";
+    ctx.fillStyle = isDark ? "#4da3ff" : "#2574a9";
+    ctx.fillText(IS_EN ? "Size (µm)" : "Diamètre (µm)", W - 135, 20);
+    ctx.fillStyle = isDark ? "#f87171" : "#c0392b";
+    ctx.fillText(IS_EN ? "Toxicity" : "Toxicité", W - 135, 38);
+    ctx.fillStyle = isDark ? "#2ecc71" : "#1e8449";
+    ctx.fillText(IS_EN ? "Goal (400 µm)" : "Cible (400 µm)", W - 135, 56);
 }
 
 function addLog(msg) {

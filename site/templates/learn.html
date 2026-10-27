@@ -20,10 +20,10 @@
 </div>
 
 <!-- 3 Everyday Analogies -->
-<div class="scenario-grid" style="margin-bottom:15px;">
+<div class="scenario-grid" style="margin-bottom:20px;">
     <div class="card" style="margin-bottom:0;">
         <h2>{{ "1. Layers Inside a Tumor" if is_en else "1. Les couches d'une tumeur" }}</h2>
-        <p style="margin-top:6px;">
+        <p style="margin-top:8px;">
             {% if is_en %}
                 Cells on the <strong>green outer layer</strong> get plenty of oxygen and sugar, so they divide fast. Cells in the <strong>yellow middle layer</strong> suffocate from low oxygen (<em>hypoxia</em>). In large tumors, the very center starves completely (<em>necrosis</em>).
             {% else %}
@@ -34,7 +34,7 @@
 
     <div class="card" style="margin-bottom:0;">
         <h2>{{ "2. Why Scans & Biopsies Matter" if is_en else "2. Pourquoi faire des examens ?" }}</h2>
-        <p style="margin-top:6px;">
+        <p style="margin-top:8px;">
             {% if is_en %}
                 Doctors never see exact cell counts. Basic scans have <strong>±5% blur</strong>. Running an <strong>Oxygen Scan (pO2)</strong> reveals whether central cells lack oxygen (making them 3x harder to kill), and a <strong>Biopsy</strong> checks if resistant cells are taking over.
             {% else %}
@@ -45,7 +45,7 @@
 
     <div class="card" style="margin-bottom:0;">
         <h2>{{ "3. Gentle Doses vs. Big Blasts" if is_en else "3. Petites doses vs gros choc" }}</h2>
-        <p style="margin-top:6px;">
+        <p style="margin-top:8px;">
             {% if is_en %}
                 Why don't hospitals deliver 50 Gy in one day? Because <strong>healthy organs</strong> repair small daily doses (~2 Gy) much better than big blasts, and spacing sessions lets oxygen reach deeper into the shrinking tumor.
             {% else %}
@@ -58,7 +58,7 @@
 <!-- Interactive Mini-Sandbox -->
 <div class="card">
     <h2>{{ "Interactive Sandbox: Test Radiation vs. Oxygen" if is_en else "Mini-laboratoire interactif : Testez Rayons & Oxygène" }}</h2>
-    <p style="margin-bottom:12px;">
+    <p style="margin-bottom:16px;">
         {% if is_en %}
             Move the two sliders below to see how our real radiobiology equations (Linear-Quadratic + Oxygen Enhancement Ratio) react:
         {% else %}
@@ -66,20 +66,20 @@
         {% endif %}
     </p>
 
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:15px; margin-bottom:12px;">
-        <div>
-            <label style="font-size:13px;">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:18px; margin-bottom:16px;">
+        <div class="control-box" style="margin-bottom:0;">
+            <label>
                 {{ "Single Radiation Session:" if is_en else "Dose d'une séance :" }}
                 <strong id="sb-dose-lbl">2.0</strong> Gy
             </label>
-            <input type="range" id="sb-dose" min="0.5" max="5.0" step="0.1" value="2.0" oninput="updateSandbox()" style="width:100%; margin-top:4px;">
+            <input type="range" id="sb-dose" min="0.5" max="5.0" step="0.1" value="2.0" oninput="updateSandbox()" style="width:100%; margin-top:8px;">
         </div>
-        <div>
-            <label style="font-size:13px;">
+        <div class="control-box" style="margin-bottom:0;">
+            <label>
                 {{ "Tumor Oxygen Level (pO2):" if is_en else "Oxygène dans la tumeur (pO2) :" }}
                 <strong id="sb-o2-lbl">25</strong> mmHg
             </label>
-            <input type="range" id="sb-o2" min="0" max="60" step="1" value="25" oninput="updateSandbox()" style="width:100%; margin-top:4px;">
+            <input type="range" id="sb-o2" min="0" max="60" step="1" value="25" oninput="updateSandbox()" style="width:100%; margin-top:8px;">
         </div>
     </div>
 
@@ -100,7 +100,7 @@
     <table>
         <thead>
             <tr>
-                <th>{{ "Term in the App" if is_en else "Terme dans le jeu" }}</th>
+                <th style="width:240px;">{{ "Term in the App" if is_en else "Terme dans le jeu" }}</th>
                 <th>{{ "What It Means in Everyday Words" if is_en else "Explication simple" }}</th>
             </tr>
         </thead>
@@ -224,16 +224,16 @@ const QUIZ = IS_EN ? [
 function renderQuiz() {
     const el = document.getElementById("quiz-container");
     el.innerHTML = QUIZ.map((item, qi) => `
-        <div style="margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid #eee;">
-            <strong style="font-size:14px;">${item.q}</strong>
-            <div style="margin-top:6px;">
+        <div style="margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid #e2e8f0;">
+            <strong style="font-size:16px;">${item.q}</strong>
+            <div style="margin-top:8px;">
                 ${item.opts.map((opt, oi) => `
-                    <button class="action-btn" style="padding:7px 10px; margin-bottom:5px;" onclick="answerQuiz(${qi}, ${oi}, this)">
+                    <button class="action-btn" style="padding:10px 14px; margin-bottom:6px;" onclick="answerQuiz(${qi}, ${oi}, this)">
                         ${opt}
                     </button>
                 `).join("")}
             </div>
-            <div id="quiz-fb-${qi}" style="display:none; font-size:12px; margin-top:4px;"></div>
+            <div id="quiz-fb-${qi}" style="display:none; margin-top:8px;"></div>
         </div>
     `).join("");
 }
@@ -243,11 +243,11 @@ function answerQuiz(qi, oi, btn) {
     const fb = document.getElementById("quiz-fb-" + qi);
     fb.style.display = "block";
     if (oi === item.ans) {
-        btn.style.borderColor = "#27ae60";
+        btn.style.borderColor = "#1e8449";
         fb.className = "alert alert-success";
         fb.textContent = item.why;
     } else {
-        btn.style.borderColor = "#e74c3c";
+        btn.style.borderColor = "#c0392b";
         fb.className = "alert alert-error";
         fb.textContent = IS_EN ? "Not quite — try another answer." : "Pas tout à fait — essayez une autre réponse.";
     }

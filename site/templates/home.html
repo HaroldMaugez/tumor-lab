@@ -3,7 +3,7 @@
 {% block content %}
 
 <h1>Tumor Lab</h1>
-<p class="text-muted" style="font-size:14px; margin-bottom:12px;">
+<p class="text-muted" style="font-size:16px; margin-bottom:16px;">
     {% if is_en %}
         Interactive tumor detection, diagnostic imaging &amp; radiotherapy simulator — grounded in published oncology data, explained simply for everyone.
     {% else %}
@@ -21,21 +21,21 @@
 
 <!-- Beginner Onboarding Box -->
 <div class="tutorial-box">
-    <h2 style="margin-bottom:8px; color:#1e8449;">
+    <h2 style="margin-bottom:8px;">
         {% if is_en %}
             New to biology or oncology? Start here in 1 click
         {% else %}
             Aucune connaissance en biologie ou en cancérologie ? Commencez ici
         {% endif %}
     </h2>
-    <p style="font-size:14px; margin-bottom:10px;">
+    <p style="margin-bottom:10px;">
         {% if is_en %}
             You don't need any medical background to use Tumor Lab. Imagine stepping into the shoes of a doctor monitoring a tiny <strong>0.6 mm tumor</strong> (about the size of a grain of sand):
         {% else %}
             Vous n'avez besoin d'aucun prérequis scientifique. Imaginez-vous dans la peau d'un médecin qui suit une minuscule <strong>tumeur de 0,6 mm</strong> (la taille d'un grain de sable) :
         {% endif %}
     </p>
-    <ul style="padding-left:20px; font-size:13px; margin-bottom:14px;">
+    <ul style="margin-bottom:16px;">
         {% if is_en %}
             <li><strong>1. Detect &amp; Monitor:</strong> Real medical scans have slight noise — you see estimated size and blood markers, never exact cell counts.</li>
             <li><strong>2. Diagnose Hidden Risks:</strong> Run an <strong>Oxygen Scan (pO2)</strong> to spot suffocating central cells (<em>hypoxia</em>) and a <strong>Biopsy</strong> to detect resistant cells before treating blindly.</li>
@@ -46,11 +46,11 @@
             <li><strong>3. Traiter sans nuire :</strong> Réduisez la tumeur sous <strong>400 µm</strong> avec de petites doses de rayons sans abîmer l'organe sain voisin.</li>
         {% endif %}
     </ul>
-    <div>
+    <div style="display:flex; flex-wrap:wrap; gap:10px;">
         <a href="{{ url_for('play', scenario='tutoriel', lang=lang) }}" class="btn btn-success">
             {{ "Start Guided Tutorial (No Account Needed)" if is_en else "Lancer le Tutoriel Guidé (Sans inscription)" }}
         </a>
-        <a href="{{ url_for('learn', lang=lang) }}" class="btn" style="margin-left:8px; margin-top:4px;">
+        <a href="{{ url_for('learn', lang=lang) }}" class="btn">
             {{ "Learn the Basics in 3 Min (+ Quiz)" if is_en else "Comprendre en 3 min (+ Quiz)" }}
         </a>
     </div>
@@ -58,8 +58,8 @@
 
 <!-- Account / Guest Info -->
 {% if user %}
-    <div class="card" style="padding:14px 20px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+    <div class="card" style="padding:16px 22px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <div>
                 <strong>
                     {% if is_en %}Welcome, {{ user.username }}{% else %}Bonjour {{ user.username }}{% endif %}
@@ -78,60 +78,66 @@
         </div>
     </div>
 {% else %}
-    <div class="card" style="padding:14px 20px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+    <div class="card" style="padding:16px 22px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <div>
                 <strong>{{ "Instant Access:" if is_en else "Accès immédiat :" }}</strong>
-                <span style="font-size:13px; color:#666;">
+                <span class="text-muted">
                     {{ "Click any mode below to play right away as a Guest, or create an account to save your name on the Leaderboard." if is_en else "Cliquez directement sur un mode ci-dessous pour jouer en invité, ou créez un compte pour enregistrer votre pseudo." }}
                 </span>
             </div>
-            <div>
+            <div style="display:flex; gap:8px;">
                 <a href="{{ url_for('register', lang=lang) }}" class="btn btn-small">{{ "Create Account" if is_en else "Créer un compte" }}</a>
-                <a href="{{ url_for('login', lang=lang) }}" class="btn btn-secondary btn-small" style="margin-left:6px;">{{ "Log in" if is_en else "Se connecter" }}</a>
+                <a href="{{ url_for('login', lang=lang) }}" class="btn btn-secondary btn-small">{{ "Log in" if is_en else "Se connecter" }}</a>
             </div>
         </div>
     </div>
 {% endif %}
 
 <!-- Game Modes -->
-<h2>{{ "Simulation & Game Modes" if is_en else "Modes de simulation et de jeu" }}</h2>
-<p class="text-muted">
-    {{ "Every mode is clickable immediately. If this is your first visit, start with the Guided Tutorial." if is_en else "Tous les modes sont accessibles en 1 clic. Pour une première visite, commencez par le Tutoriel guidé." }}
-</p>
+<section style="margin-top:28px;">
+    <h2>{{ "Simulation & Game Modes" if is_en else "Modes de simulation et de jeu" }}</h2>
+    <p class="text-muted">
+        {{ "Every mode is clickable immediately. If this is your first visit, start with the Guided Tutorial." if is_en else "Tous les modes sont accessibles en 1 clic. Pour une première visite, commencez par le Tutoriel guidé." }}
+    </p>
 
-<div class="scenario-grid">
-    {% for key, info in scenarios.items() %}
-    <a href="{{ url_for('play', scenario=key, lang=lang) }}" style="text-decoration:none; color:inherit;">
-        <div class="scenario-card {{ 'featured' if key == 'tutoriel' else '' }}">
-            <div class="badge">{{ info.badge }}</div>
-            <h3>{{ info.name }}</h3>
-            <p style="margin-top:6px;">{{ info.desc }}</p>
-            <span class="btn {{ 'btn-success' if key == 'tutoriel' else '' }} btn-small">
-                {{ "Start Tutorial" if (key == 'tutoriel' and is_en) else ("Lancer le tutoriel" if key == 'tutoriel' else ("Play" if is_en else "Jouer")) }}
-            </span>
-        </div>
-    </a>
-    {% endfor %}
-</div>
+    <div class="scenario-grid">
+        {% for key, info in scenarios.items() %}
+        <a href="{{ url_for('play', scenario=key, lang=lang) }}" style="text-decoration:none; color:inherit;">
+            <div class="scenario-card {{ 'featured' if key == 'tutoriel' else '' }}">
+                <div>
+                    <div class="badge">{{ info.badge }}</div>
+                    <h3>{{ info.name }}</h3>
+                    <p>{{ info.desc }}</p>
+                </div>
+                <div>
+                    <span class="btn {{ 'btn-success' if key == 'tutoriel' else '' }} btn-small">
+                        {{ "Start Tutorial" if (key == 'tutoriel' and is_en) else ("Lancer le tutoriel" if key == 'tutoriel' else ("Play" if is_en else "Jouer")) }}
+                    </span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
 
 <!-- Scientific Results -->
-<section id="results" style="margin-top:40px;">
+<section id="results" style="margin-top:44px;">
     <h2>
         {% if is_en %}
-            Scientific <span style="color:#3498db;">Validation &amp; Diagrams</span>
+            Scientific Validation &amp; Diagrams
         {% else %}
-            Résultats <span style="color:#3498db;">Scientifiques</span>
+            Résultats &amp; Figures Scientifiques
         {% endif %}
     </h2>
-    <p class="text-muted" style="margin-bottom:10px;">
+    <p class="text-muted" style="margin-bottom:8px;">
         {% if is_en %}
-            Figures generated directly by our Python engine and benchmarked against peer-reviewed oncology experiments (31/32 checks passed).
+            Figures generated directly by our Python engine and benchmarked against peer-reviewed oncology experiments (31/32 checks passed). Click any figure to view it full-screen.
         {% else %}
-            Figures générées par le moteur et comparées à des expériences publiées (31/32 vérifications réussies).
+            Figures générées par le moteur et comparées à des expériences publiées (31/32 vérifications réussies). Cliquez sur une figure pour l'agrandir en plein écran.
         {% endif %}
     </p>
-    <div class="beginner-note" style="margin-bottom:18px;">
+    <div class="beginner-note" style="margin-bottom:22px;">
         {% if is_en %}
             <strong>How to read this section without a biology background:</strong> Each card shows the scientific plot used to verify accuracy, followed by a blue <strong>"In plain words"</strong> box explaining what it means in everyday language.
         {% else %}
@@ -139,13 +145,13 @@
         {% endif %}
     </div>
 
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(350px, 1fr)); gap:20px;">
+    <div class="figures-grid">
         {% for fig in figures %}
-        <div class="card" style="padding:0; overflow:hidden;">
-            <img src="{{ url_for('static', filename=fig.img) }}" alt="{{ fig.title }}" style="width:100%; display:block;">
-            <div style="padding:12px;">
-                <strong>{{ fig.title }}</strong>
-                <p class="text-muted" style="margin-top:4px;">{{ fig.tech }}</p>
+        <div class="card figure-card">
+            <img src="{{ url_for('static', filename=fig.img) }}" alt="{{ fig.title }}" onclick="openImgModal(this.src, this.alt)">
+            <div class="figure-card-body">
+                <div class="figure-title">{{ fig.title }}</div>
+                <p class="text-muted">{{ fig.tech }}</p>
                 <div class="beginner-note">{{ fig.plain }}</div>
             </div>
         </div>
@@ -153,24 +159,23 @@
     </div>
 </section>
 
-<!-- Team -->
-<section id="team" style="margin-top:50px;">
-    <h2>
-        {% if is_en %}
-            The <span style="color:#3498db;">Creator</span>
-        {% else %}
-            L'<span style="color:#3498db;">équipe</span>
-        {% endif %}
-    </h2>
+<!-- Lightbox Modal for full-size figure reading -->
+<div class="img-modal" id="img-modal" onclick="closeImgModal()">
+    <img id="img-modal-target" src="" alt="">
+</div>
 
-    <div style="display:flex; justify-content:center; margin-top:20px;">
-        <div class="card" style="text-align:center; padding:32px 48px; max-width:380px;">
-            <div style="width:80px; height:80px; border-radius:50%; margin:0 auto 14px; background:#2c3e50; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:bold; color:white;">HM</div>
+<!-- Team -->
+<section id="team" style="margin-top:48px;">
+    <h2>{{ "Creator" if is_en else "L'équipe" }}</h2>
+
+    <div style="display:flex; justify-content:center; margin-top:18px;">
+        <div class="card" style="text-align:center; padding:28px 36px; max-width:440px;">
+            <div style="width:72px; height:72px; border-radius:50%; margin:0 auto 14px; background:#243447; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:bold; color:white;">HM</div>
             <h3 style="margin-bottom:4px;">Harold Maugez</h3>
-            <p class="text-muted" style="color:#3498db; font-size:13px; margin-bottom:8px;">
+            <p style="color:#2574a9; font-weight:bold; margin-bottom:8px;">
                 {{ "Creator & Developer" if is_en else "Créateur & développeur" }}
             </p>
-            <p class="text-muted" style="font-size:12px;">
+            <p class="text-muted">
                 {% if is_en %}
                     Mathematical modeling, reaction-diffusion solver, diagnostic simulation engine, Actor-Critic neural network, Unity C# bridge and Flask web platform.
                 {% else %}
@@ -180,5 +185,21 @@
         </div>
     </div>
 </section>
+
+<script>
+function openImgModal(src, alt) {
+    const m = document.getElementById("img-modal");
+    const t = document.getElementById("img-modal-target");
+    t.src = src;
+    t.alt = alt || "";
+    m.classList.add("open");
+}
+function closeImgModal() {
+    document.getElementById("img-modal").classList.remove("open");
+}
+document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") closeImgModal();
+});
+</script>
 
 {% endblock %}

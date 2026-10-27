@@ -3,7 +3,7 @@
 {% block content %}
 
 <h1>{{ "Scientific References" if is_en else "Références scientifiques" }}</h1>
-<p class="text-muted" style="margin-bottom:15px;">
+<p class="text-muted" style="margin-bottom:16px;">
     {% if is_en %}
         Every equation, diffusion constant, hypoxia curve and organ tolerance threshold in Tumor Lab is traced to peer-reviewed literature.
     {% else %}
@@ -22,22 +22,22 @@
 {% for cat_key, cat_name in categories.items() %}
 {% set cat_refs = refs | selectattr("category", "equalto", cat_key) | list %}
 {% if cat_refs %}
-<div class="card" style="margin-bottom:20px;">
+<div class="card" style="margin-bottom:22px;">
     <h2 style="margin-bottom:12px;">{{ cat_name }}</h2>
     {% for ref in cat_refs %}
-    <div style="padding:12px 0; border-bottom:1px solid #eee;">
+    <div class="ref-item">
         <div>
-            <strong style="color:#2c3e50;">{{ ref.authors }}</strong>
+            <strong>{{ ref.authors }}</strong>
             <span class="text-muted">({{ ref.year }})</span>
             <br>
-            <span style="font-style:italic; color:#555;">{{ ref.title }}</span>
+            <span style="font-style:italic;">{{ ref.title }}</span>
             <br>
             <span class="text-muted">{{ ref.journal }} {{ ref.volume }}:{{ ref.pages }}</span>
             {% if ref.doi %}
-            · <a href="https://doi.org/{{ ref.doi }}" target="_blank" style="font-size:12px;">DOI: {{ ref.doi }}</a>
+            · <a href="https://doi.org/{{ ref.doi }}" target="_blank" style="color:#2574a9;">DOI: {{ ref.doi }}</a>
             {% endif %}
         </div>
-        <div class="exam-box" style="margin-top:6px;">
+        <div class="exam-box">
             <strong>{{ "Role in Tumor Lab:" if is_en else "Usage :" }}</strong>
             {{ ref.usage if is_en else ref.usage_fr }}
         </div>
@@ -49,7 +49,7 @@
 
 <div class="card" style="margin-top:20px;">
     <h2>{{ "Reproducibility & Parameter Provenance" if is_en else "Reproductibilité & Traçabilité" }}</h2>
-    <p style="font-size:13px;">
+    <p>
         {% if is_en %}
             See <code>REFERENCES.md</code> and <code>tumeur/parameters.py</code> in the repository: every constant is explicitly tagged <code>MEASURED</code>, <code>DERIVED</code>, <code>CALIBRATED</code> or <code>SCENARIO</code>.
         {% else %}

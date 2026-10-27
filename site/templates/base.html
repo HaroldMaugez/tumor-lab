@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Tumor Lab{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=2">
 </head>
 <body>
 <nav>
     <a href="{{ url_for('home', lang=lang) }}" class="brand">Tumor Lab</a>
-    <div>
+    <div class="nav-links">
         <a href="{{ url_for('home', lang=lang) }}">{{ "Home" if is_en else "Accueil" }}</a>
         <a href="{{ url_for('play', scenario='tutoriel', lang=lang) }}"><strong>{{ "Tutorial" if is_en else "Tutoriel" }}</strong></a>
         <a href="{{ url_for('learn', lang=lang) }}">{{ "How It Works" if is_en else "Comprendre" }}</a>
@@ -17,7 +17,7 @@
         <a href="{{ url_for('tests_page', lang=lang) }}">{{ "Validation (31/32)" if is_en else "Tests (31/32)" }}</a>
         <a href="{{ url_for('references', lang=lang) }}">{{ "References" if is_en else "Références" }}</a>
         {% if user %}
-            <span style="margin-left:14px; font-size:13px; opacity:0.85;">{{ user.username }}</span>
+            <span class="nav-user">{{ user.username }}</span>
             {% if is_guest %}
                 <a href="{{ url_for('register', lang=lang) }}">{{ "Save Account" if is_en else "Créer un compte" }}</a>
             {% endif %}
@@ -54,6 +54,9 @@ function toggleDark() {
     const isDark = document.body.classList.contains('dark');
     try { localStorage.setItem('dark', isDark ? '1' : '0'); } catch (_) {}
     updateDarkBtn();
+    if (typeof window.onThemeChange === 'function') {
+        window.onThemeChange();
+    }
 }
 try {
     if (localStorage.getItem('dark') === '1') {
